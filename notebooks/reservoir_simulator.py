@@ -53,6 +53,7 @@ class ReservoirSim:
         self.volumes = np.ones(self.nb) * self.dx * self.dy * self.dz
 
         # TODO : only necessary for well locations
+        # Only depends on dx and dz, WHY?
         self.wi = 2 * np.pi * self.perm_field * self.dz
         self.wi /= self.mu_w * np.log(0.208 * self.dx / self.rw)
 
@@ -69,6 +70,8 @@ class ReservoirSim:
         p1 = np.zeros(self.nb)
         pn = np.zeros(self.nb)
 
+        # v v TODO Adjust for nx!=ny TODO
+        # TODO FIRST: CHANGE PERM_FIELD to 2D array!
         t1 = self.dy * self.perm_field[:-1] * self.perm_field[1:]
         t1 /= self.perm_field[:-1] + self.perm_field[1:]
         t1 *= (Phi[:-1] + Phi[1:]) / 2
