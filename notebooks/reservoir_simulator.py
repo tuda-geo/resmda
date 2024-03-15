@@ -1,158 +1,131 @@
-#%%
 import numpy as np
-import matplotlib.pyplot as plt
+import scipy as sp
 
-def progress_bar(iteration, total, bar_length=50):
-    percent = float(iteration) / float(total)
-    arrow = '=' * int(round(percent * bar_length) - 1)
-    spaces = ' ' * (bar_length - len(arrow))
-
-    sys.stdout.write(f'\r[{arrow + spaces}] {percent * 100:.2f}%')
-    sys.stdout.flush()
 
 class ReservoirSim:
-    def __init__(self, nx, ny, perm_field=None):
-        # Initialize simulation parameters
+    """A small Reservoir Simulator.
+
+    `nx`: numbers of cells in x [-]
+    `ny`: numbers of cells in y [-]
+    `perm_field`: permeabilities (?), [dimensionless?]
+    `phi`: porosity (?) [dimensionless?]
+    `c_f`: ?
+    `p0`: ?
+    `rho0`: ?
+    `mu_w`: ?
+    `rw`: ?
+    `dx`: thickness of cells in x [m]
+    `dy`: thickness of cells in y [m]
+    `dz`: thickness of cells in z [m]
+    `pres_ini`: initial pressure [?]
+    `pres_prd`: production pressure [?]
+    `pres_inj`: injection pressure [?]
+
+    """
+
+    def __init__(self, nx, ny, **kwargs):
+        """Initialize a Simulation instance."""
+        # TODO: MOVE TO MORE EXPLICIT INPUTS, NOT ONLY KWARGS
+
+        # Store dimensions
         self.nx = nx
         self.ny = ny
         self.nb = nx * ny
-        self.perm_field = perm_field if perm_field is not None else np.ones(self.nb) * 1000
-        
-        self.phi = 0.2
-        self.c_f = 1e-5
-        self.p0 = 1
-        self.rho0 = 1
-        self.mu_w = 1
-        self.rw = 0.15
-        self.dx = 50
-        self.dy = 50
-        self.dz = 10
-        self.V = self.dx * self.dy * self.dz
-        
-        self.pres_ini = 150
-        self.pres_prd = 120
-        self.pres_inj = 180
 
-    def compute_beta(self, dens):
-        Phi = dens / self.mu_w
-        return Phi
-    
-    def compute_wi(self, k, mu, dens):
-        r0 =  0.208 * self.dx
-        wi = 2 * np.pi * k * self.dz / mu / np.log(r0 / self.rw)
-        return wi
-    
-    def compute_density(self, p):
-        dens = self.rho0 * (1 + self.c_f * (p - self.p0))
-        return dens
-    def get_matrix(self, n, Phi, compr, p):
-        nconn = (self.nx - 1) * self.ny + self.nx * (self.ny - 1)
-        block_m = np.zeros(nconn, dtype=np.int32)
-        block_p = np.zeros(nconn, dtype=np.int32)
-        Trans = np.ones(nconn)
-        A = self.dx * self.dy
+        # Set parameters from input or defaults
+        self.perm_field = kwargs.pop('perm_field', np.ones(self.nb) * 1000)
+        self.phi = kwargs.pop('phi', 0.2)
+        self.c_f = kwargs.pop('c_f', 1e-5)
+        self.p0 = kwargs.pop('p0', 1)
+        self.rho0 = kwargs.pop('rho0', 1)
+        self.mu_w = kwargs.pop('mu_w', 1)
+        self.rw = kwargs.pop('rw', 0.15)
+        self.dx = kwargs.pop('dx', 50)
+        self.dy = kwargs.pop('dy', 50)
+        self.dz = kwargs.pop('dz', 10)
+        self.pres_ini = kwargs.pop('pres_ini', 150)
 
-        perm_1d = self.perm_field.flatten()
+        # TODO : make a flexible list of wells
+        self.pres_prd = kwargs.pop('pres_prd', 120)
+        self.pres_inj = kwargs.pop('pres_inj', 180)
 
-        for i in range(self.nx - 1):
-            for j in range(self.ny):
-                k = i + j * (self.nx - 1)
-                block_m[k] = i + j * self.nx
-                block_p[k] = block_m[k] + 1
-                gl = perm_1d[block_m[k]] * A / self.dx
-                gr = perm_1d[block_p[k]] * A / self.dx
-                Trans[k] = gl * gr / (gl + gr)
+        # Store volumes : TODO : generalize to arb. volumes
+        self.volumes = np.ones(self.nb) * self.dx * self.dy * self.dz
 
+        # TODO : only necessary for well locations
+        self.wi = 2 * np.pi * self.perm_field * self.dz
+        self.wi /= self.mu_w * np.log(0.208 * self.dx / self.rw)
+
+        # TODO
+        self.nconn = (self.nx - 1) * self.ny + self.nx * (self.ny - 1)
+
+    def get_matrix(self, Phi, compr, p):
+        """Construct K-matrix."""
+
+        # Pre-allocate diagonals.
+        mn = np.zeros(self.nb)
+        m1 = np.zeros(self.nb)
+        d = compr.copy()
+        p1 = np.zeros(self.nb)
+        pn = np.zeros(self.nb)
+
+        # Loop over dimensions.
         for i in range(self.nx):
-            for j in range(self.ny - 1):
-                k = (self.nx-1) * self.ny + i + j * self.nx
-                block_m[k] = i + j * self.nx
-                block_p[k] = block_m[k] + self.nx
-                gl = perm_1d[block_m[k]] * A / self.dy
-                gr = perm_1d[block_p[k]] * A / self.dy
-                Trans[k] = gl * gr / (gl + gr)
-    
+            for j in range(self.ny):
 
-        K = np.zeros((n,n))
-        f = np.ones(n) * compr * p
-        for i in range(n):
-            K[i, i] = compr[i]
-            
-        for k in range(nconn):
-            im = block_m[k]
-            ip = block_p[k]
-            K[im, im] += Trans[k] * (Phi[im] + Phi[ip]) / 2
-            K[im, ip] -= Trans[k] * (Phi[im] + Phi[ip]) / 2
-            K[ip, im] -= Trans[k] * (Phi[im] + Phi[ip]) / 2
-            K[ip, ip] += Trans[k] * (Phi[im] + Phi[ip]) / 2
+                im = i + j * self.nx
+                gl = self.perm_field[im]
 
-        return K, f
-    
-    def simulate(self):
-        P = np.ones(self.nb) * self.pres_ini
-        dt = 0.0001
-        pressure_history = []
-        for t in range(10):
-            dens = self.compute_density(P)
-            beta = self.compute_beta(dens)
-            wi = self.compute_wi(self.perm_field, self.mu_w, dens)
-            compr = np.ones(self.nb) * self.V * self.phi * self.c_f / dt
-            
-            K, f = self.get_matrix(self.nb, beta, compr, P)
-            
-            f[0] += self.pres_inj * wi[0]
-            K[0, 0] += wi[0]
-            
-            f[-1] += self.pres_prd * wi[-1]
-            K[-1, -1] += wi[-1]
-            
-            P = np.linalg.solve(K, f)
-            pressure_history.append(P.copy())
-        
-        z = np.reshape(P, [self.ny, self.nx])
-        
-        #Visualization
-        # plt.imshow(z)
-        # plt.colorbar()
-        # plt.show()
-        return np.array(pressure_history)
-    
-    # def plot_pressure_grid(self, pressure_history, steps_per_row=3):
-    #     num_steps = len(pressure_history)
-    #     num_rows = (num_steps + steps_per_row - 1) // steps_per_row
+                if i < (self.nx - 1):
+                    ip = im + 1
+                    gr = self.perm_field[ip]
+                    Trans = self.dy * gl * gr / (gl + gr)
+                    Trans *= (Phi[im] + Phi[ip]) / 2
 
-    #     # Find global minimum and maximum pressure for color scaling
-    #     global_min = np.min([np.min(p) for p in pressure_history])
-    #     global_max = np.max([np.max(p) for p in pressure_history])
+                    d[im] += Trans
+                    d[ip] += Trans
+                    m1[im] -= Trans
+                    p1[ip] -= Trans
 
-    #     fig, axes = plt.subplots(num_rows, steps_per_row, figsize=(15, num_rows*5))
-        
-    #     # Flatten the axes array for easier indexing
-    #     axes = axes.flatten()
+                if j < (self.ny - 1):
+                    ip = im + self.nx
+                    gr = self.perm_field[ip]
+                    Trans = self.dx * gl * gr / (gl + gr)
+                    Trans *= (Phi[im] + Phi[ip]) / 2
 
-    #     for i in range(num_steps):
-    #         ax = axes[i]
-    #         z = np.reshape(pressure_history[i], [self.ny, self.nx])
-    #         im = ax.imshow(z, cmap='viridis', vmin=global_min, vmax=global_max)  # Fixed color limits
-    #         ax.set_title(f"Time step {i+1}")
+                    d[im] += Trans
+                    d[ip] += Trans
+                    mn[im] -= Trans
+                    pn[ip] -= Trans
 
-    #     # Hide any remaining empty subplots
-    #     for i in range(num_steps, num_rows * steps_per_row):
-    #         axes[i].axis('off')
+        # Bring to sparse matrix
+        offsets = np.array([-self.ny, -1, 0, 1, self.nx])
+        data = np.array([mn, m1, d, p1, pn])
+        K = sp.sparse.dia_array((data, offsets), shape=(self.nb, self.nb))
+        return K.tocsc()
 
-    #     # Adjust layout to make room for colorbar
-    #     plt.subplots_adjust(right=0.8)
+    def simulate(self, realizations=10, dt=0.0001):
 
-    #     # Add a colorbar to the figure at the right side
-    #     cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
-    #     fig.colorbar(im, cax=cbar_ax)
+        compr = self.volumes * self.phi * self.c_f / dt
 
-    #     plt.show()
+        P = np.empty((realizations+1, self.nb))
+        P[0, :] = np.ones(self.nb) * self.pres_ini
 
-    
- 
-    
-# perm_field = np.ones(25 * 25) * 1000  # Replace with your actual perm field
-# reservoir = ReservoirSim(perm_field=perm_field)
-# pressure_history = reservoir.simulate()
-# reservoir.plot_middle_pressure(pressure_history)
+        for i in range(realizations):
+
+            dens = self.rho0 * (1 + self.c_f * (P[i, :] - self.p0))
+            beta = dens / self.mu_w
+
+            K = self.get_matrix(beta, compr, P[i, :])
+            f = compr * P[i, :]
+
+            # TODO : make a flexible list of wells
+            f[0] += self.pres_inj * self.wi[0]
+            K[0, 0] += self.wi[0]
+            f[-1] += self.pres_prd * self.wi[-1]
+            K[-1, -1] += self.wi[-1]
+
+            # Solve the system
+            P[i+1, :] = sp.sparse.linalg.spsolve(K, f)
+
+        return P
