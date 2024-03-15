@@ -69,34 +69,22 @@ class ReservoirSim:
         p1 = np.zeros(self.nb)
         pn = np.zeros(self.nb)
 
-        # Loop over dimensions.
-        for i in range(self.nx):
-            for j in range(self.ny):
+        t1 = self.dy * self.perm_field[:-1] * self.perm_field[1:]
+        t1 /= self.perm_field[:-1] + self.perm_field[1:]
+        t1 *= (Phi[:-1] + Phi[1:]) / 2
+        t1[self.nx-1::self.nx] = 0.0
+        d[:-1] += t1
+        d[1:] += t1
+        m1[:-1] -= t1
+        p1[1:] -= t1
 
-                im = i + j * self.nx
-                gl = self.perm_field[im]
-
-                if i < (self.nx - 1):
-                    ip = im + 1
-                    gr = self.perm_field[ip]
-                    Trans = self.dy * gl * gr / (gl + gr)
-                    Trans *= (Phi[im] + Phi[ip]) / 2
-
-                    d[im] += Trans
-                    d[ip] += Trans
-                    m1[im] -= Trans
-                    p1[ip] -= Trans
-
-                if j < (self.ny - 1):
-                    ip = im + self.nx
-                    gr = self.perm_field[ip]
-                    Trans = self.dx * gl * gr / (gl + gr)
-                    Trans *= (Phi[im] + Phi[ip]) / 2
-
-                    d[im] += Trans
-                    d[ip] += Trans
-                    mn[im] -= Trans
-                    pn[ip] -= Trans
+        t2 = self.dx * self.perm_field[:-self.nx] * self.perm_field[self.nx:]
+        t2 /= self.perm_field[:-self.nx] + self.perm_field[self.nx:]
+        t2 *= (Phi[:-self.nx] + Phi[self.nx:]) / 2
+        d[:-self.nx] += t2
+        d[self.nx:] += t2
+        mn[:-self.nx] -= t2
+        pn[self.nx:] -= t2
 
         # Bring to sparse matrix
         offsets = np.array([-self.ny, -1, 0, 1, self.nx])
