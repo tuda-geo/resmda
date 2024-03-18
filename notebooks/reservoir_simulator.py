@@ -91,10 +91,11 @@ class ReservoirSim:
         offsets = np.array([-self.nx, -1, 0, 1, self.nx])  # Gabriel's version
         data = np.array([mn, m1, d, p1, pn])
         K = sp.sparse.dia_array((data, offsets), shape=(self.size, self.size))
+
         return K.tocsc()
 
     def simulate(self, realizations=10, dt=0.0001):
-
+        """Run simulator."""
         compr = self.volumes * self.phi * self.c_f / dt
 
         P = np.empty((realizations+1, self.size))
