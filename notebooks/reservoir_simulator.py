@@ -5,8 +5,6 @@ import scipy as sp
 class ReservoirSim:
     """A small Reservoir Simulator.
 
-    `nx`: numbers of cells in x [-]
-    `ny`: numbers of cells in y [-]
     `perm_field`: permeabilities (?), [dimensionless?]
     `phi`: porosity (?) [dimensionless?]
     `c_f`: ?
@@ -14,52 +12,62 @@ class ReservoirSim:
     `rho0`: ?
     `mu_w`: ?
     `rw`: ?
+    `pres_ini`: initial pressure [?]
+    `wells`: location and pressure of wells [?]
     `dx`: thickness of cells in x [m]
     `dy`: thickness of cells in y [m]
     `dz`: thickness of cells in z [m]
-    `pres_ini`: initial pressure [?]
-    `pres_prd`: production pressure [?]
-    `pres_inj`: injection pressure [?]
 
     """
 
-    def __init__(self, perm_field, **kwargs):
+    def __init__(self, perm_field, phi=0.2, c_f=1e-5, p0=1, rho0=1, mu_w=1,
+                 rw=0.15, pres_ini=150, wells=None, dx=50, dy=50, dz=10):
         """Initialize a Simulation instance."""
-        # TODO: MOVE TO MORE EXPLICIT INPUTS, NOT ONLY KWARGS
 
-        # Set parameters from input or defaults
-        self.nx, self.ny = perm_field.shape
-        if self.nx != self.ny:
-            print("Warning, if nx!=ny result is probably wrong.")
         self.size = perm_field.size
         self.shape = perm_field.shape
-        self.np = (self.nx - 1) * self.ny + self.nx * (self.ny - 1)
+        self.nx, self.ny = perm_field.shape
         self.perm_field = perm_field.ravel()
-        self.phi = kwargs.pop('phi', 0.2)
-        self.c_f = kwargs.pop('c_f', 1e-5)
-        self.p0 = kwargs.pop('p0', 1)
-        self.rho0 = kwargs.pop('rho0', 1)
-        self.mu_w = kwargs.pop('mu_w', 1)
-        self.rw = kwargs.pop('rw', 0.15)
-        self.dx = kwargs.pop('dx', 50)
-        self.dy = kwargs.pop('dy', 50)
-        self.dz = kwargs.pop('dz', 10)
-        self.pres_ini = kwargs.pop('pres_ini', 150)
 
-        # TODO : make a flexible list of wells
-        self.pres_prd = kwargs.pop('pres_prd', 120)
-        self.pres_inj = kwargs.pop('pres_inj', 180)
+        if self.nx != self.ny:
+            print("Warning, if nx!=ny result is probably wrong.")
+
+        self.phi = phi
+        self.c_f = c_f
+        self.p0 = p0
+        self.rho0 = rho0
+        self.mu_w = mu_w
+        self.rw = rw
+        self.dx = dx
+        self.dy = dy
+        self.dz = dz
+        self.pres_ini = pres_ini
 
         # Store volumes : TODO : generalize to arb. volumes
         self.volumes = np.ones(self.size) * self.dx * self.dy * self.dz
 
-        # TODO : only necessary for well locations
-        # Only depends on dx and dz, WHY?
-        self.wi = 2 * np.pi * self.perm_field * self.dz
-        self.wi /= self.mu_w * np.log(0.208 * self.dx / self.rw)
+        # TODO : make a flexible list of wells
+        if wells is None:
+            wells = np.array([[0, 0, 180], [self.nx-1, self.ny-1, 120]])
+        else:
+            wells = np.array(wells)
 
-    def get_matrix(self, Phi, compr, p):
+        # Get well terms.
+        # TODO : Only depends on dx and dz, WHY?
+        wi = 2 * np.pi * self.perm_field * self.dz
+        wi /= self.mu_w * np.log(0.208 * self.dx / self.rw)
+
+        # TODO check x, y locations
+        locs = wells[:, 0]*self.ny + wells[:, 1]
+        self._add_wells_f = np.zeros(self.size)
+        self._add_wells_d = np.zeros(self.size)
+        self._add_wells_f[locs] += wells[:, 2] * wi[locs]
+        self._add_wells_d[locs] += wi[locs]
+
+    def solve(self, compr, p):
         """Construct K-matrix."""
+
+        phi = self.rho0 * (1 + self.c_f * (p - self.p0)) / self.mu_w
 
         # Pre-allocate diagonals.
         mn = np.zeros(self.size)
@@ -71,7 +79,7 @@ class ReservoirSim:
         # v v TODO Adjust for nx!=ny TODO
         t1 = self.dy * self.perm_field[:-1] * self.perm_field[1:]
         t1 /= self.perm_field[:-1] + self.perm_field[1:]
-        t1 *= (Phi[:-1] + Phi[1:]) / 2
+        t1 *= (phi[:-1] + phi[1:]) / 2
         t1[self.nx-1::self.nx] = 0.0
         d[:-1] += t1
         d[1:] += t1
@@ -80,11 +88,15 @@ class ReservoirSim:
 
         t2 = self.dx * self.perm_field[:-self.nx] * self.perm_field[self.nx:]
         t2 /= self.perm_field[:-self.nx] + self.perm_field[self.nx:]
-        t2 *= (Phi[:-self.nx] + Phi[self.nx:]) / 2
+        t2 *= (phi[:-self.nx] + phi[self.nx:]) / 2
         d[:-self.nx] += t2
         d[self.nx:] += t2
         mn[:-self.nx] -= t2
         pn[self.nx:] -= t2
+
+        # Add wells.
+        f = compr * p + self._add_wells_f
+        d += self._add_wells_d
 
         # Bring to sparse matrix
         # offsets = np.array([-self.ny, -1, 0, 1, self.nx])  # TODO
@@ -92,30 +104,15 @@ class ReservoirSim:
         data = np.array([mn, m1, d, p1, pn])
         K = sp.sparse.dia_array((data, offsets), shape=(self.size, self.size))
 
-        return K.tocsc()
+        # Solve the system
+        return sp.sparse.linalg.spsolve(K.tocsc(), f, use_umfpack=False)
 
-    def simulate(self, realizations=10, dt=0.0001):
+    def __call__(self, nt=10, dt=0.0001):
         """Run simulator."""
+
         compr = self.volumes * self.phi * self.c_f / dt
+        pressure = np.ones((nt+1, self.size)) * self.pres_ini
+        for i in range(nt):
+            pressure[i+1, :] = self.solve(compr, pressure[i, :])
 
-        P = np.empty((realizations+1, self.size))
-        P[0, :] = np.ones(self.size) * self.pres_ini
-
-        for i in range(realizations):
-
-            dens = self.rho0 * (1 + self.c_f * (P[i, :] - self.p0))
-            beta = dens / self.mu_w
-
-            K = self.get_matrix(beta, compr, P[i, :])
-            f = compr * P[i, :]
-
-            # TODO : make a flexible list of wells
-            f[0] += self.pres_inj * self.wi[0]
-            K[0, 0] += self.wi[0]
-            f[-1] += self.pres_prd * self.wi[-1]
-            K[-1, -1] += self.wi[-1]
-
-            # Solve the system
-            P[i+1, :] = sp.sparse.linalg.spsolve(K, f, use_umfpack=False)
-
-        return P.reshape((realizations+1, *self.shape))
+        return pressure.reshape((nt+1, *self.shape))
