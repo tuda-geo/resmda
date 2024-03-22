@@ -5,18 +5,27 @@ import scipy as sp
 class ReservoirSim:
     """A small Reservoir Simulator.
 
-    `perm_field`: permeabilities (?), [dimensionless?]
-    `phi`: porosity (?) [dimensionless?]
-    `c_f`: ?
-    `p0`: ?
-    `rho0`: ?
-    `mu_w`: ?
-    `rw`: ?
-    `pres_ini`: initial pressure [?]
-    `wells`: location and pressure of wells [?]
-    `dx`: thickness of cells in x [m]
-    `dy`: thickness of cells in y [m]
-    `dz`: thickness of cells in z [m]
+
+    Parameters
+    ----------
+    perm_field : 2D array
+        Permeabilities (?)
+    phi : float
+        Porosity (-)
+    c_f : float
+        Formation compressibility (1/kPa)
+    p0 : float
+        Initial pressure (bar or kPa?)
+    rho0 : float
+        Fixed density (kg/m3)
+    mu_w : float
+        Viscosity (cP - Pa s)
+    rw : float
+        Well radius (m)
+    pres_ini : initial pressure [?]
+    wells : location and pressure of wells [?]
+    dx, dy, dz : floats or 1D array
+        Cell dimensions (m).
 
     """
 
@@ -26,7 +35,7 @@ class ReservoirSim:
 
         self.size = perm_field.size
         self.shape = perm_field.shape
-        self.nx, self.ny = perm_field.shape
+        self.nx, self.ny = perm_field.T.shape
         self.perm_field = perm_field.ravel()
 
         if self.nx != self.ny:
@@ -46,7 +55,6 @@ class ReservoirSim:
         # Store volumes : TODO : generalize to arb. volumes
         self.volumes = np.ones(self.size) * self.dx * self.dy * self.dz
 
-        # TODO : make a flexible list of wells
         if wells is None:
             wells = np.array([[0, 0, 180], [self.nx-1, self.ny-1, 120]])
         else:
@@ -54,6 +62,7 @@ class ReservoirSim:
 
         # Get well terms.
         # TODO : Only depends on dx and dz, WHY?
+        # well index
         wi = 2 * np.pi * self.perm_field * self.dz
         wi /= self.mu_w * np.log(0.208 * self.dx / self.rw)
 
@@ -67,6 +76,7 @@ class ReservoirSim:
     def solve(self, compr, p):
         """Construct K-matrix."""
 
+        # Mobility ratio without permeability
         phi = self.rho0 * (1 + self.c_f * (p - self.p0)) / self.mu_w
 
         # Pre-allocate diagonals.
@@ -76,7 +86,6 @@ class ReservoirSim:
         p1 = np.zeros(self.size)
         pn = np.zeros(self.size)
 
-        # v v TODO Adjust for nx!=ny TODO
         t1 = self.dy * self.perm_field[:-1] * self.perm_field[1:]
         t1 /= self.perm_field[:-1] + self.perm_field[1:]
         t1 *= (phi[:-1] + phi[1:]) / 2
@@ -99,8 +108,7 @@ class ReservoirSim:
         d += self._add_wells_d
 
         # Bring to sparse matrix
-        # offsets = np.array([-self.ny, -1, 0, 1, self.nx])  # TODO
-        offsets = np.array([-self.nx, -1, 0, 1, self.nx])  # Gabriel's version
+        offsets = np.array([-self.nx, -1, 0, 1, self.nx])
         data = np.array([mn, m1, d, p1, pn])
         K = sp.sparse.dia_array((data, offsets), shape=(self.size, self.size))
 
@@ -110,6 +118,7 @@ class ReservoirSim:
     def __call__(self, nt=10, dt=0.0001):
         """Run simulator."""
 
+        # TODO: dt could change over time, so move into loop
         compr = self.volumes * self.phi * self.c_f / dt
         pressure = np.ones((nt+1, self.size)) * self.pres_ini
         for i in range(nt):
