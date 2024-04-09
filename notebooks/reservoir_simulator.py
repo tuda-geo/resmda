@@ -9,7 +9,7 @@ class ReservoirSim:
     """
 
     def __init__(self, perm_field, phi=0.2, c_f=1e-5, p0=1, rho0=1, mu_w=1,
-                 rw=0.15, pres_ini=150, wells=None, dx=50, dy=50, dz=10):
+                 rw=0.15, pres_ini=150, wells=None, dxy=50, dz=10):
         """Initialize a Simulation instance.
 
         Parameters
@@ -30,8 +30,8 @@ class ReservoirSim:
             Well radius (m)
         pres_ini : initial pressure [?]
         wells : location and pressure of wells [?]
-        dx, dy, dz : floats or 1D array
-            Cell dimensions (m).
+        dxy, dz : floats
+            Cell dimensions (m); dx=dy=dxy.
 
         """
 
@@ -46,12 +46,13 @@ class ReservoirSim:
         self.rho0 = rho0
         self.mu_w = mu_w
         self.rw = rw
-        self.dx = dx
-        self.dy = dy
+        self.dxy = dxy
+        self.dx = self.dxy
+        self.dy = self.dxy
         self.dz = dz
         self.pres_ini = pres_ini
 
-        # Store volumes : TODO : generalize to arb. volumes
+        # Store volumes (needs adjustment for arbitrary cell volumes)
         self.volumes = np.ones(self.size) * self.dx * self.dy * self.dz
 
         if wells is None:
@@ -59,29 +60,31 @@ class ReservoirSim:
         else:
             self.wells = np.array(wells)
 
-        # Get well terms.
-        # TODO : Only depends on dx and dz, WHY?
-        # well index
-        wi = 2 * np.pi * self.perm_field * self.dz
-        wi /= self.mu_w * np.log(0.208 * self.dx / self.rw)
+        # Get well locations
+        self.locs = self.wells[:, 1]*self.nx + self.wells[:, 0]
+
+        # Get well terms (formula will need adjustment for dx!=dy).
+        wi = 2 * np.pi * self.perm_field[self.locs] * self.dz
+        wi /= self.mu_w * np.log(0.208 * self.dxy / self.rw)
 
         # Add wells
-        locs = self.wells[:, 1]*self.nx + self.wells[:, 0]
-        self._add_wells_f = np.zeros(self.size)
-        self._add_wells_d = np.zeros(self.size)
-        self._add_wells_f[locs] += self.wells[:, 2] * wi[locs]
-        self._add_wells_d[locs] += wi[locs]
+        self._add_wells_f = self.wells[:, 2] * wi
+        self._add_wells_d = wi
 
-    def solve(self, compr, p):
+    def solve(self, pressure, dt):
         """Construct K-matrix."""
 
         # Mobility ratio without permeability
-        phi = self.rho0 * (1 + self.c_f * (p - self.p0)) / self.mu_w
+        phi = self.rho0 * (1 + self.c_f * (pressure - self.p0)) / self.mu_w
+
+        # Compr. and right-hand side f
+        compr = self.volumes * self.phi * self.c_f / dt
+        f = compr * pressure
 
         # Pre-allocate diagonals.
         mn = np.zeros(self.size)
         m1 = np.zeros(self.size)
-        d = compr.copy()
+        d = compr
         p1 = np.zeros(self.size)
         pn = np.zeros(self.size)
 
@@ -103,8 +106,8 @@ class ReservoirSim:
         pn[self.nx:] -= t2
 
         # Add wells.
-        f = compr * p + self._add_wells_f
-        d += self._add_wells_d
+        f[self.locs] += self._add_wells_f
+        d[self.locs] += self._add_wells_d
 
         # Bring to sparse matrix
         offsets = np.array([-self.nx, -1, 0, 1, self.nx])
@@ -126,8 +129,7 @@ class ReservoirSim:
 
         pressure = np.ones((dt.size+1, self.size)) * self.pres_ini
         for i, d in enumerate(dt):
-            compr = self.volumes * self.phi * self.c_f / d
-            pressure[i+1, :] = self.solve(compr, pressure[i, :])
+            pressure[i+1, :] = self.solve(pressure[i, :], d)
 
         return pressure.reshape((dt.size+1, *self.shape), order='F')
 
