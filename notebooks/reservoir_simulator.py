@@ -9,7 +9,7 @@ class ReservoirSim:
     """
 
     def __init__(self, perm_field, phi=0.2, c_f=1e-5, p0=1, rho0=1, mu_w=1,
-                 rw=0.15, pres_ini=150, wells=None, dxy=50, dz=10):
+                 rw=0.15, pres_ini=150, wells=None, dx=50, dz=10):
         """Initialize a Simulation instance.
 
         Parameters
@@ -30,8 +30,9 @@ class ReservoirSim:
             Well radius (m)
         pres_ini : initial pressure [?]
         wells : location and pressure of wells [?]
-        dxy, dz : floats
-            Cell dimensions (m); dx=dy=dxy.
+        dx, dz : floats
+            Cell dimensions in horizontal (dx) and vertical (dz)
+            directions (m).
 
         """
 
@@ -46,14 +47,13 @@ class ReservoirSim:
         self.rho0 = rho0
         self.mu_w = mu_w
         self.rw = rw
-        self.dxy = dxy
-        self.dx = self.dxy
-        self.dy = self.dxy
+        self.dx = dx
         self.dz = dz
         self.pres_ini = pres_ini
 
         # Store volumes (needs adjustment for arbitrary cell volumes)
-        self.volumes = np.ones(self.size) * self.dx * self.dy * self.dz
+        self.volumes = np.ones(self.size) * self.dx * self.dx * self.dz
+        self._vol_phi_cf = self.volumes * self.phi * self.c_f
 
         if wells is None:
             self.wells = np.array([[0, 0, 180], [self.nx-1, self.ny-1, 120]])
@@ -63,9 +63,9 @@ class ReservoirSim:
         # Get well locations
         self.locs = self.wells[:, 1]*self.nx + self.wells[:, 0]
 
-        # Get well terms (formula will need adjustment for dx!=dy).
+        # Get well terms
         wi = 2 * np.pi * self.perm_field[self.locs] * self.dz
-        wi /= self.mu_w * np.log(0.208 * self.dxy / self.rw)
+        wi /= self.mu_w * np.log(0.208 * self.dx / self.rw)
 
         # Add wells
         self._add_wells_f = self.wells[:, 2] * wi
@@ -78,7 +78,7 @@ class ReservoirSim:
         phi = self.rho0 * (1 + self.c_f * (pressure - self.p0)) / self.mu_w
 
         # Compr. and right-hand side f
-        compr = self.volumes * self.phi * self.c_f / dt
+        compr = self._vol_phi_cf / dt
         f = compr * pressure
 
         # Pre-allocate diagonals.
@@ -88,7 +88,7 @@ class ReservoirSim:
         p1 = np.zeros(self.size)
         pn = np.zeros(self.size)
 
-        t1 = self.dy * self.perm_field[:-1] * self.perm_field[1:]
+        t1 = self.dx * self.perm_field[:-1] * self.perm_field[1:]
         t1 /= self.perm_field[:-1] + self.perm_field[1:]
         t1 *= (phi[:-1] + phi[1:]) / 2
         t1[self.nx-1::self.nx] = 0.0
@@ -134,47 +134,53 @@ class ReservoirSim:
         return pressure.reshape((dt.size+1, *self.shape), order='F')
 
 
-def index2ij(index, nx, ny):
-    """Convert index numeration to ij-index."""
-    return ((index % nx) + 1, (index // nx) + 1)
+def build_perm_cov_matrix(nx, ny, length, theta, sigma_pr2=None):
+    """Build co-variance matrix for permeability.
 
+    If `sigma_pr` is provided, the sphere formula is used, else Gaspari Cohn.
 
-def ij2index(i, j, nx, ny):
-    """Convert ij numeration to index."""
-    return (i-1) + (j-1)*nx
+    It could be further speedup: the first loop is only necessary for i=1.
+    """
 
-
-# TODO 0: Also implement Sphere function
-# TODO 1: Ensure it is the same as before
-# TODO 2: It could be further speedup:
-#         the first loop is only necessary for i=1
-def build_perm_cov_matrix(nx, ny, length, theta, sigma_pr2):
+    nc = nx*ny
     cost = np.cos(theta)
     sint = np.sin(theta)
-    cov = np.zeros([nx*ny, nx*ny])
-    xx = [((i % nx) + 1, (i // nx) + 1) for i in range(nx*ny)]
+
+    # Fill the first row nx * nc
+    tmp = np.zeros([nx, nc])
     for i in range(nx):
-        x0 = xx[i]
-        for j in range(nx*ny):
-            x1 = xx[j]
-            d0 = x1[0]-x0[0]
-            d1 = x1[1]-x0[1]
+        x0 = (i % nx) + 1
+        x1 = (i // nx) + 1
+        for j in range(i+1, nc):
+            y0 = (j % nx) + 1
+            y1 = (j // nx) + 1
+            d0 = y0 - x0
+            d1 = y1 - x1
             rot0 = cost*d0 - sint*d1
             rot1 = sint*d0 + cost*d1
 
-            # Gaspari Cohn TODO get powers of, w\o sqrt
-            hl = np.sqrt((rot0/length[0])**2 +
-                         (rot1/length[1])**2)
+            hl = np.sqrt((rot0/length[0])**2 + (rot1/length[1])**2)
 
-            if hl < 1:
-                cov[i, j] = (-(hl**5)/4 + (hl**4)/2 + (hl**3)*5/8 -
-                             (hl**2)*5/3 + 1)
-            elif hl >= 1 and hl < 2:
-                cov[i, j] = ((hl**5)/12 - (hl**4)/2 + (hl**3)*5/8 +
-                             (hl**2)*5/3 - hl*5 + 4 - (1/hl)*2/3)
-    for j in range(1, ny):
-        cov[nx*j:nx*(j+1), nx*j:] = cov[:nx, :-nx*j]
-        for i in range(j):
-            cov[nx*j:nx*(j+1), nx*(j-i-1):nx*(j-i)] = cov[:nx, nx*i:nx*(i+1)]
+            # Calculate value.
+            if sigma_pr2:  # Sphere formula
+                if hl <= 1:
+                    tmp[i, j] = sigma_pr2 * (1 - 3/2*hl + (hl**3)/2)
+
+            else:  # Gaspari Cohn TODO get powers of, w\o sqrt
+                if hl < 1:
+                    tmp[i, j] = (-(hl**5)/4 + (hl**4)/2 + (hl**3)*5/8 -
+                                 (hl**2)*5/3 + 1)
+                elif hl >= 1 and hl < 2:
+                    tmp[i, j] = ((hl**5)/12 - (hl**4)/2 + (hl**3)*5/8 +
+                                 (hl**2)*5/3 - hl*5 + 4 - (1/hl)*2/3)
+
+    # Fill the upper triangle by copying the first row
+    cov = np.zeros([nc, nc])
+    for j in range(ny):
+        cov[nx*j:nx*(j+1), nx*j:] = tmp[:, :nc-nx*j]
+    # Fill the lower triangle with the transpose
+    cov += cov.T
+    # Add the diagonal
+    cov += np.diag(np.ones(nc))
 
     return cov
