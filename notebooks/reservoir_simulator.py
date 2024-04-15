@@ -142,6 +142,8 @@ def build_perm_cov_matrix(nx, ny, length, theta, sigma_pr2=None):
     It could be further speedup: the first loop is only necessary for i=1.
     """
 
+    # TODO - Change to sparse matrices!
+
     nc = nx*ny
     cost = np.cos(theta)
     sint = np.sin(theta)
