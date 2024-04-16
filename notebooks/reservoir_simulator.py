@@ -2,7 +2,7 @@ import numpy as np
 import scipy as sp
 
 
-class ReservoirSim:
+class Simulator:
     """A small Reservoir Simulator.
 
 
@@ -60,9 +60,12 @@ class ReservoirSim:
         else:
             self.wells = np.array(wells)
 
-        # Get well locations
+        # Get well locations and set terms
         self.locs = self.wells[:, 1]*self.nx + self.wells[:, 0]
+        self._set_well_terms
 
+    @property
+    def _set_well_terms(self):
         # Get well terms
         wi = 2 * np.pi * self.perm_field[self.locs] * self.dz
         wi /= self.mu_w * np.log(0.208 * self.dx / self.rw)
@@ -117,7 +120,7 @@ class ReservoirSim:
         # Solve the system
         return sp.sparse.linalg.spsolve(K.tocsc(), f, use_umfpack=False)
 
-    def __call__(self, dt=np.ones(10)*0.0001):
+    def __call__(self, dt=np.ones(10)*0.0001, perm_field=None):
         """Run simulator.
 
         Parameters
@@ -126,6 +129,10 @@ class ReservoirSim:
             Time steps.
 
         """
+        # Update permeability field if provided
+        if perm_field is not None:
+            self.perm_field = perm_field.ravel('F')
+            self._set_well_terms
 
         pressure = np.ones((dt.size+1, self.size)) * self.pres_ini
         for i, d in enumerate(dt):
@@ -134,19 +141,26 @@ class ReservoirSim:
         return pressure.reshape((dt.size+1, *self.shape), order='F')
 
 
-def build_perm_cov_matrix(nx, ny, length, theta, sigma_pr2=None):
+def covariance(nx, ny, length, theta, sigma_pr2=None):
     """Build co-variance matrix for permeability.
 
     If `sigma_pr` is provided, the sphere formula is used, else Gaspari Cohn.
 
     It could be further speedup: the first loop is only necessary for i=1.
+
+    Parameters
+    ----------
+    nx, ny : int
+        Number of cells in x and y
+    theta : float
+        Angle (in degrees)
     """
 
     # TODO - Change to sparse matrices!
 
     nc = nx*ny
-    cost = np.cos(theta)
-    sint = np.sin(theta)
+    cost = sp.special.cosdg(theta)
+    sint = sp.special.sindg(theta)
 
     # Fill the first row nx * nc
     tmp = np.zeros([nx, nc])
