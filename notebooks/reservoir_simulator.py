@@ -141,12 +141,8 @@ class Simulator:
         return pressure.reshape((dt.size+1, *self.shape), order='F')
 
 
-def covariance(nx, ny, length, theta, sigma_pr2=None):
+def covariance(nx, ny, length, theta, sigma_pr2, dtype='float32'):
     """Build co-variance matrix for permeability.
-
-    If `sigma_pr` is provided, the sphere formula is used, else Gaspari Cohn.
-
-    It could be further speedup: the first loop is only necessary for i=1.
 
     Parameters
     ----------
@@ -155,48 +151,32 @@ def covariance(nx, ny, length, theta, sigma_pr2=None):
     theta : float
         Angle (in degrees)
     """
-
-    # TODO - Change to sparse matrices!
-
     nc = nx*ny
-    cost = sp.special.cosdg(theta)
-    sint = sp.special.sindg(theta)
+    cost = np.cos(theta)
+    sint = np.sin(theta)
 
-    # Fill the first row nx * nc
-    tmp = np.zeros([nx, nc])
+    # 1. Fill the first row nx * nc, but vertically
+    tmp1 = np.zeros([nx, nc], dtype=dtype)
     for i in range(nx):
-        x0 = (i % nx) + 1
-        x1 = (i // nx) + 1
+        tmp1[i, 0] = 1.0  # diagonal
         for j in range(i+1, nc):
-            y0 = (j % nx) + 1
-            y1 = (j // nx) + 1
-            d0 = y0 - x0
-            d1 = y1 - x1
+            d0 = (j % nx) - i
+            d1 = (j // nx)
             rot0 = cost*d0 - sint*d1
             rot1 = sint*d0 + cost*d1
-
             hl = np.sqrt((rot0/length[0])**2 + (rot1/length[1])**2)
+            if hl <= 1:
+                tmp1[i, j-i] = sigma_pr2 * (1 - 1.5*hl + hl**3/2)
 
-            # Calculate value.
-            if sigma_pr2:  # Sphere formula
-                if hl <= 1:
-                    tmp[i, j] = sigma_pr2 * (1 - 3/2*hl + (hl**3)/2)
+    # 2. Get the indices of the non-zero columns
+    ind = np.where(tmp1.sum(axis=0))[0]
 
-            else:  # Gaspari Cohn TODO get powers of, w\o sqrt
-                if hl < 1:
-                    tmp[i, j] = (-(hl**5)/4 + (hl**4)/2 + (hl**3)*5/8 -
-                                 (hl**2)*5/3 + 1)
-                elif hl >= 1 and hl < 2:
-                    tmp[i, j] = ((hl**5)/12 - (hl**4)/2 + (hl**3)*5/8 +
-                                 (hl**2)*5/3 - hl*5 + 4 - (1/hl)*2/3)
+    # 3. Expand the non-zero colums ny-times
+    tmp2 = np.zeros([nc, ind.size], dtype=dtype)
+    for i, j in enumerate(ind):
+        n = j//nx
+        tmp2[:nc-n*nx, i] = np.tile(tmp1[:, j], ny-n)
 
-    # Fill the upper triangle by copying the first row
-    cov = np.zeros([nc, nc])
-    for j in range(ny):
-        cov[nx*j:nx*(j+1), nx*j:] = tmp[:, :nc-nx*j]
-    # Fill the lower triangle with the transpose
-    cov += cov.T
-    # Add the diagonal
-    cov += np.diag(np.ones(nc))
-
-    return cov
+    # 4. Construct array through sparse diagonal array
+    cov = sp.sparse.dia_array((tmp2.T, -ind), shape=(nc, nc))
+    return cov.toarray()
