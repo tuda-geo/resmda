@@ -1,6 +1,10 @@
 import numpy as np
 import scipy as sp
 
+# Instantiate a random number generator
+# Currently with a fixed seed for development/reproducibility
+rng = np.random.default_rng(1103)
+
 
 class Simulator:
     """A small Reservoir Simulator.
@@ -8,14 +12,14 @@ class Simulator:
 
     """
 
-    def __init__(self, perm_field, phi=0.2, c_f=1e-5, p0=1, rho0=1, mu_w=1,
+    def __init__(self, nx, ny, phi=0.2, c_f=1e-5, p0=1, rho0=1, mu_w=1,
                  rw=0.15, pres_ini=150, wells=None, dx=50, dz=10):
         """Initialize a Simulation instance.
 
         Parameters
         ----------
-        perm_field : 2D array
-            Permeabilities ny-by-nx (?)
+        nx, ny : int
+            Dimension of field
         phi : float
             Porosity (-)
         c_f : float
@@ -36,10 +40,10 @@ class Simulator:
 
         """
 
-        self.size = perm_field.size
-        self.shape = perm_field.shape
-        self.nx, self.ny = perm_field.shape
-        self.perm_field = perm_field.ravel('F')
+        self.size = nx*ny
+        self.shape = (nx, ny)
+        self.nx = nx
+        self.ny = ny
 
         self.phi = phi
         self.c_f = c_f
@@ -62,7 +66,6 @@ class Simulator:
 
         # Get well locations and set terms
         self.locs = self.wells[:, 1]*self.nx + self.wells[:, 0]
-        self._set_well_terms
 
     @property
     def _set_well_terms(self):
@@ -120,7 +123,7 @@ class Simulator:
         # Solve the system
         return sp.sparse.linalg.spsolve(K.tocsc(), f, use_umfpack=False)
 
-    def __call__(self, dt=np.ones(10)*0.0001, perm_field=None):
+    def __call__(self, perm_fields, dt=np.ones(10)*0.0001, data=False):
         """Run simulator.
 
         Parameters
@@ -129,16 +132,76 @@ class Simulator:
             Time steps.
 
         """
-        # Update permeability field if provided
-        if perm_field is not None:
+        if perm_fields.ndim == 2:
+            ne = 1
+            perm_fields = [perm_fields, ]
+        else:
+            ne = perm_fields.shape[0]
+        nt = dt.size+1
+
+        out = np.zeros((ne, nt, self.nx, self.ny))
+        for n, perm_field in enumerate(perm_fields):
+
             self.perm_field = perm_field.ravel('F')
             self._set_well_terms
 
-        pressure = np.ones((dt.size+1, self.size)) * self.pres_ini
-        for i, d in enumerate(dt):
-            pressure[i+1, :] = self.solve(pressure[i, :], d)
+            pressure = np.ones((dt.size+1, self.size)) * self.pres_ini
+            for i, d in enumerate(dt):
+                pressure[i+1, :] = self.solve(pressure[i, :], d)
+            out[n, ...] = pressure.reshape((dt.size+1, *self.shape), order='F')
+        if ne == 1:
+            out = out[0, ...]
 
-        return pressure.reshape((dt.size+1, *self.shape), order='F')
+        if data:
+            return out[..., data[0], data[1]]
+        else:
+            return out
+
+
+class RandomPermeability:
+
+    def __init__(self, nx, ny, perm_mean, perm_min, perm_max, length=(10, 10),
+                 theta=45, sigma_pr2=1.0, dtype='float32'):
+        self.nx = nx
+        self.ny = ny
+        self.nc = nx*ny
+        self.perm_mean = perm_mean
+        self.perm_min = perm_min
+        self.perm_max = perm_max
+        self.length = length
+        self.theta = theta
+        self.sigma_pr2 = sigma_pr2
+        self.dtype = dtype
+
+    @property
+    def cov(self):
+        if not hasattr(self, '_cov'):
+            self._cov = covariance(
+                nx=self.nx, ny=self.ny, length=self.length,
+                theta=self.theta, sigma_pr2=self.sigma_pr2, dtype=self.dtype
+            )
+        return self._cov
+
+    @property
+    def lcho(self):
+        if not hasattr(self, '_lcho'):
+            self._lcho = sp.linalg.cholesky(self.cov, lower=True)
+        return self._lcho
+
+    def __call__(self, n, perm_mean=None, perm_min=None, perm_max=None):
+        if perm_mean is None:
+            perm_mean = self.perm_mean
+        if perm_min is None:
+            perm_min = self.perm_min
+        if perm_max is None:
+            perm_max = self.perm_max
+        out = np.full((n, self.nx, self.ny), perm_mean, order='F')
+        for i in range(n):
+            z = rng.normal(size=self.nc)
+            out[i, ...] += (self.lcho @ z).reshape(
+                    (self.nx, self.ny), order='F')
+
+        return out.clip(perm_min, perm_max)
 
 
 def covariance(nx, ny, length, theta, sigma_pr2, dtype='float32'):
