@@ -228,8 +228,19 @@ def covariance(nx, ny, length, theta, sigma_pr2, dtype='float32'):
             rot0 = cost*d0 - sint*d1
             rot1 = sint*d0 + cost*d1
             hl = np.sqrt((rot0/length[0])**2 + (rot1/length[1])**2)
-            if hl <= 1:
-                tmp1[i, j-i] = sigma_pr2 * (1 - 1.5*hl + hl**3/2)
+
+            # Calculate value.
+            if sigma_pr2:  # Sphere formula
+                if hl <= 1:
+                    tmp1[i, j-i] = sigma_pr2 * (1 - 1.5*hl + hl**3/2)
+
+            else:  # Gaspari Cohn
+                if hl < 1:
+                    tmp1[i, j-i] = (-(hl**5)/4 + (hl**4)/2 + (hl**3)*5/8 -
+                                    (hl**2)*5/3 + 1)
+                elif hl >= 1 and hl < 2:
+                    tmp1[i, j-i] = ((hl**5)/12 - (hl**4)/2 + (hl**3)*5/8 +
+                                    (hl**2)*5/3 - hl*5 + 4 - (1/hl)*2/3)
 
     # 2. Get the indices of the non-zero columns
     ind = np.where(tmp1.sum(axis=0))[0]
