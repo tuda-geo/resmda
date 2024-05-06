@@ -3,7 +3,7 @@ import scipy as sp
 
 # Instantiate a random number generator
 # Currently with a fixed seed for development/reproducibility
-rng = np.random.default_rng(1103)
+rng = np.random.default_rng(1848)
 
 
 class Simulator:
@@ -254,3 +254,44 @@ def covariance(nx, ny, length, theta, sigma_pr2, dtype='float32'):
     # 4. Construct array through sparse diagonal array
     cov = sp.sparse.dia_array((tmp2.T, -ind), shape=(nc, nc))
     return cov.toarray()
+
+
+def esmda(model_prior, forward, data_obs, dstd,
+          alphas=4, data_prior=None, vmin=None, vmax=None):
+    ne = model_prior.shape[0]
+    nt = data_obs.size
+    if isinstance(alphas, int):
+        alphas = np.zeros(alphas) + alphas
+    else:
+        alphas = np.asarray(alphas)
+    Ce = np.diag(dstd**2)
+
+    # TODO: unit of time? unit of pressure? In data-plots
+
+    model_post = model_prior.copy()
+    for i, alpha in enumerate(alphas):
+
+        # Perturb the observation for each ensemble member
+        # TODO: In Emerick and Reynolds, 2013, they use sqrt(α)?
+        data_pert = data_obs + alpha*dstd*rng.normal(size=(ne, nt))
+
+        # Get data
+        if i > 0 or data_prior is None:
+            data_prior = forward(model_post)
+
+        # Center ensemble parameters and data around their means.
+        # TODO: OVER WHICH AXIS? Ne or Nd ???
+        cpost = model_post - model_post.mean(axis=0)
+        cdata = data_prior - data_prior.mean(axis=0)
+
+        # Calculate the Kalman gain
+        # np.linalg.inv does not work well for real-live problems:
+        # use subspace inversions  with woodbury matrix identity
+        K = (cpost.T@cdata)@np.linalg.inv((cdata.T@cdata + alpha*(ne-1)*Ce))
+
+        # Update the ensemble parameters
+        model_post += (K@(data_pert - data_prior).T).T
+        if vmin or vmax:
+            model_post = np.clip(model_post, vmin, vmax)
+
+    return model_post, forward(model_post)
