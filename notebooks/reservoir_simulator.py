@@ -271,23 +271,34 @@ def esmda(model_prior, forward, data_obs, dstd,
     model_post = model_prior.copy()
     for i, alpha in enumerate(alphas):
 
-        # Perturb the observation for each ensemble member
-        # TODO: In Emerick and Reynolds, 2013, they use sqrt(α)?
-        data_pert = data_obs + alpha*dstd*rng.normal(size=(ne, nt))
+        # == Step 1 of Emerick & Reynolds, 2013 ==
 
         # Get data
         if i > 0 or data_prior is None:
             data_prior = forward(model_post)
 
+        # == Step 2 of Emerick & Reynolds, 2013 ==
+
+        # Perturb the observation for each ensemble member
+        # TODO: In Emerick and Reynolds, 2013, they use sqrt(α)?
+        # data_pert = data_obs + alpha*dstd*rng.normal(size=(ne, nt))
+        data_pert = data_obs + np.sqrt(alpha)*dstd*rng.normal(size=(ne, nt))
+
         # Center ensemble parameters and data around their means.
         # TODO: OVER WHICH AXIS? Ne or Nd ???
+        # Normalization! subtract average of all ensembles.
         cpost = model_post - model_post.mean(axis=0)
         cdata = data_prior - data_prior.mean(axis=0)
 
+        # Below is Equation(3) of Emerick & Reynolds, 2013
         # Calculate the Kalman gain
         # np.linalg.inv does not work well for real-live problems:
         # use subspace inversions  with woodbury matrix identity
-        K = (cpost.T@cdata)@np.linalg.inv((cdata.T@cdata + alpha*(ne-1)*Ce))
+        CMD = cpost.T@cdata
+        CDD = cdata.T@cdata
+        CD = alpha*(ne-1)*Ce
+        Cinv = np.linalg.inv(CDD + CD)
+        K = CMD@Cinv
 
         # Update the ensemble parameters
         model_post += (K@(data_pert - data_prior).T).T
