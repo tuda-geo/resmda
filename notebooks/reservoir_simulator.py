@@ -314,22 +314,21 @@ def esmda(model_prior, forward, data_obs, sigma,
         # == Step (c) of Emerick & Reynolds, 2013 ==
         # Update the ensemble using Eq. (3) with C_D replaced by α_i * C_D
 
-        # Center ensemble parameters and data around their means
+        # Compute the (co-)variances
+        # Note: The factor (ne-1) is part of the covariances CMD and CDD,
+        # wikipedia.org/wiki/Covariance#Calculating_the_sample_covariance
+        # but factored out of CMD(CDD+αCD)^-1 to be in αCD.
         cmodel = model_post - model_post.mean(axis=0)
         cdata = data_prior - data_prior.mean(axis=0)
-
-        # Assemble the matrices
         CMD = np.transpose(cmodel, [1, 2, 0]) @ cdata
         CDD = cdata.T @ cdata
         CD = np.diag(alpha * (ne - 1) * sigma**2)
-        # TODO: WHY « * (ne - 1) » ? => Co-Variance normalizing!!!!
 
         # Compute inverse of C
-        # Notes:
-        # - C is a real-symmetric positive-definite matrix.
-        # - Maybe use subspace inversions with Woodbury matrix identity.
-        # - Or potentially use Moore-Penrose via:
-        #   np.linalg.pinv, sp.linalg.pinv, spp.linalg.pinvh
+        # C is a real-symmetric positive-definite matrix.
+        # If issues arise in real-world problems, try using
+        # - a subspace inversions with Woodbury matrix identity, or
+        # - Moore-Penrose via np.linalg.pinv, sp.linalg.pinv, spp.linalg.pinvh.
         Cinv = np.linalg.inv(CDD + CD)
 
         # Calculate the Kalman gain
