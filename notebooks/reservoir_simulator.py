@@ -256,53 +256,91 @@ def covariance(nx, ny, length, theta, sigma_pr2, dtype='float32'):
     return cov.toarray()
 
 
-def esmda(model_prior, forward, data_obs, dstd,
+def esmda(model_prior, forward, data_obs, sigma,
           alphas=4, data_prior=None, vmin=None, vmax=None):
+    """ESMDA algorithm (Emerick and Reynolds, 2013).
+
+    Parameters
+    ---------
+    model_post : (Ne, Nx, Ny)
+    data_prior : (Ne, Nt)
+
+    # TODO - adjust
+    Do : [Nd] observed data
+    D : [Nd, Ne] simulated data by (Ne) ensemble members
+    M : [Nm, Ne] matrix of model parameters to be estimated
+    alpha : es-mda inflation factor
+    Ce : [Nd] variance of observed data
+
+
+    Returns
+    -------
+    # TODO - adjust
+    M2 : [Nm, Ne] matrix of model parameters posterior in each alpha iteration
+
+
+
+    """
+    # Get number of ensembles and time steps
     ne = model_prior.shape[0]
     nt = data_obs.size
+
+    # Get alphas
     if isinstance(alphas, int):
         alphas = np.zeros(alphas) + alphas
     else:
         alphas = np.asarray(alphas)
-    Ce = np.diag(dstd**2)
 
-    # TODO: unit of time? unit of pressure? In data-plots
-
+    # Copy prior as start of post (output)
     model_post = model_prior.copy()
+
+    # Loop over alphas
     for i, alpha in enumerate(alphas):
 
-        # == Step 1 of Emerick & Reynolds, 2013 ==
+        # == Step (a) of Emerick & Reynolds, 2013 ==
+        # Run the ensemble from time zero.
 
         # Get data
         if i > 0 or data_prior is None:
             data_prior = forward(model_post)
 
-        # == Step 2 of Emerick & Reynolds, 2013 ==
+        # == Step (b) of Emerick & Reynolds, 2013 ==
+        # For each ensemble member, perturb the observation vector using
+        # d_uc = d_obs + sqrt(α_i) * C_D^0.5 z_d; z_d ~ N(0, I_N_d)
 
-        # Perturb the observation for each ensemble member
-        # TODO: In Emerick and Reynolds, 2013, they use sqrt(α)?
-        # data_pert = data_obs + alpha*dstd*rng.normal(size=(ne, nt))
-        data_pert = data_obs + np.sqrt(alpha)*dstd*rng.normal(size=(ne, nt))
+        zd = rng.normal(size=(ne, nt))
+        data_pert = data_obs + np.sqrt(alpha) * sigma * zd
 
-        # Center ensemble parameters and data around their means.
-        # TODO: OVER WHICH AXIS? Ne or Nd ???
-        # Normalization! subtract average of all ensembles.
-        cpost = model_post - model_post.mean(axis=0)
+        # == Step (c) of Emerick & Reynolds, 2013 ==
+        # Update the ensemble using Eq. (3) with C_D replaced by α_i * C_D
+
+        # Center ensemble parameters and data around their means
+        cmodel = model_post - model_post.mean(axis=0)
         cdata = data_prior - data_prior.mean(axis=0)
 
-        # Below is Equation(3) of Emerick & Reynolds, 2013
-        # Calculate the Kalman gain
-        # np.linalg.inv does not work well for real-live problems:
-        # use subspace inversions  with woodbury matrix identity
-        CMD = cpost.T@cdata
-        CDD = cdata.T@cdata
-        CD = alpha*(ne-1)*Ce
+        # Assemble the matrices
+        CMD = np.transpose(cmodel, [1, 2, 0]) @ cdata
+        CDD = cdata.T @ cdata
+        CD = np.diag(alpha * (ne - 1) * sigma**2)
+        # TODO: WHY « * (ne - 1) » ? => Co-Variance normalizing!!!!
+
+        # Compute inverse of C
+        # Notes:
+        # - C is a real-symmetric positive-definite matrix.
+        # - Maybe use subspace inversions with Woodbury matrix identity.
+        # - Or potentially use Moore-Penrose via:
+        #   np.linalg.pinv, sp.linalg.pinv, spp.linalg.pinvh
         Cinv = np.linalg.inv(CDD + CD)
+
+        # Calculate the Kalman gain
         K = CMD@Cinv
 
         # Update the ensemble parameters
-        model_post += (K@(data_pert - data_prior).T).T
+        model_post += np.transpose(K @ (data_pert - data_prior).T, [2, 0, 1])
+
+        # Apply model parameter bounds.
         if vmin or vmax:
             model_post = np.clip(model_post, vmin, vmax)
 
+    # Return posterior model and corresponding data
     return model_post, forward(model_post)
