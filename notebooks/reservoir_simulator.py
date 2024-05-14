@@ -1,3 +1,7 @@
+# Name idea: resmda (for reservoir-esmda)
+#
+# TODO: - use this esmda to run Geirs example
+#       - compare with GitLab/GitHub esmda's
 import numpy as np
 import scipy as sp
 
@@ -256,34 +260,50 @@ def covariance(nx, ny, length, theta, sigma_pr2, dtype='float32'):
     return cov.toarray()
 
 
-def esmda(model_prior, forward, data_obs, sigma,
-          alphas=4, data_prior=None, vmin=None, vmax=None):
+def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
+          callback_post=None, return_post_data=False):
     """ESMDA algorithm (Emerick and Reynolds, 2013).
 
     Parameters
     ---------
-    model_post : (Ne, Nx, Ny)
-    data_prior : (Ne, Nt)
+    model_post : ndarray
+        Prior models of dimension ``(ne, ...)``, where ``ne`` is the number of
+        ensembles.
 
-    # TODO - adjust
-    Do : [Nd] observed data
-    D : [Nd, Ne] simulated data by (Ne) ensemble members
-    M : [Nm, Ne] matrix of model parameters to be estimated
-    alpha : es-mda inflation factor
-    Ce : [Nd] variance of observed data
+    forward : callable
+        Forward model that takes an ndarray of the shape of the prior models
+        ``(ne, ...)``, and returns a ndarray of the shape of the prior data
+        ``(ne, nd)``; ``ne`` is the number of ensembles, ``nd`` the number of
+        data.
+
+    data_obs : ndarray
+        Observed data of shape ``(nd)``.
+
+    sigma : float, ndarray
+
+    alphas : {int, ndarray}, default: 4
+        es-mda inflation factor
+
+    data_prior : ndarray, default: None
+        (ne, nd)
+
+    vmin, vmax : float, default: None
+
+    return_data_post : bool, default: False
 
 
     Returns
     -------
-    # TODO - adjust
-    M2 : [Nm, Ne] matrix of model parameters posterior in each alpha iteration
-
 
 
     """
     # Get number of ensembles and time steps
     ne = model_prior.shape[0]
-    nt = data_obs.size
+    nd = data_obs.size
+
+    # Expand sigma if float
+    if np.asarray(sigma).size == 1:
+        sigma = np.zeros(nd) + sigma
 
     # Get alphas
     if isinstance(alphas, int):
@@ -296,6 +316,7 @@ def esmda(model_prior, forward, data_obs, sigma,
 
     # Loop over alphas
     for i, alpha in enumerate(alphas):
+        print(f"ESMDA step {i+1}; α={alpha}")
 
         # == Step (a) of Emerick & Reynolds, 2013 ==
         # Run the ensemble from time zero.
@@ -308,7 +329,7 @@ def esmda(model_prior, forward, data_obs, sigma,
         # For each ensemble member, perturb the observation vector using
         # d_uc = d_obs + sqrt(α_i) * C_D^0.5 z_d; z_d ~ N(0, I_N_d)
 
-        zd = rng.normal(size=(ne, nt))
+        zd = rng.normal(size=(ne, nd))
         data_pert = data_obs + np.sqrt(alpha) * sigma * zd
 
         # == Step (c) of Emerick & Reynolds, 2013 ==
@@ -320,7 +341,7 @@ def esmda(model_prior, forward, data_obs, sigma,
         # but factored out of CMD(CDD+αCD)^-1 to be in αCD.
         cmodel = model_post - model_post.mean(axis=0)
         cdata = data_prior - data_prior.mean(axis=0)
-        CMD = np.transpose(cmodel, [1, 2, 0]) @ cdata
+        CMD = np.moveaxis(cmodel, 0, -1) @ cdata
         CDD = cdata.T @ cdata
         CD = np.diag(alpha * (ne - 1) * sigma**2)
 
@@ -335,11 +356,11 @@ def esmda(model_prior, forward, data_obs, sigma,
         K = CMD@Cinv
 
         # Update the ensemble parameters
-        model_post += np.transpose(K @ (data_pert - data_prior).T, [2, 0, 1])
+        model_post += np.moveaxis(K @ (data_pert - data_prior).T, -1, 0)
 
         # Apply model parameter bounds.
-        if vmin or vmax:
-            model_post = np.clip(model_post, vmin, vmax)
+        if callback_post:
+            callback_post(model_post)
 
     # Return posterior model and corresponding data
     return model_post, forward(model_post)
