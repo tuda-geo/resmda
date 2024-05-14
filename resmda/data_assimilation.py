@@ -18,6 +18,13 @@ import numpy as np
 
 from resmda.utils import rng
 
+__all__ = ['esmda']
+
+
+def __dir__():
+    return __all__
+
+
 # TODO: - use this esmda to run Geirs example
 #       - compare with GitLab/GitHub esmda's
 

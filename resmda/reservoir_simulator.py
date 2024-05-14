@@ -19,6 +19,12 @@ import scipy as sp
 
 from resmda.utils import rng
 
+__all__ = ['Simulator', 'RandomPermeability', 'covariance']
+
+
+def __dir__():
+    return __all__
+
 
 class Simulator:
     """A small Reservoir Simulator.

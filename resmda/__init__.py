@@ -14,9 +14,25 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+from datetime import datetime, timedelta
+
+from resmda.utils import Report
 from resmda.utils import rng as random
 from resmda.data_assimilation import esmda
 from resmda.reservoir_simulator import Simulator, RandomPermeability
 
 
 rng = random()
+
+
+# resmda version
+try:
+    # - Released versions just tags:       0.8.0
+    # - GitHub commits add .dev#+hash:     0.8.1.dev4+g2785721
+    # - Uncommitted changes add timestamp: 0.8.1.dev4+g2785721.d20191022
+    from resmda.version import version as __version__
+except ImportError:
+    # If it was not installed, then we don't know the version. We could throw a
+    # warning here, but this case *should* be rare. resmda should be installed
+    # properly!
+    __version__ = 'unknown-'+datetime.today().strftime('%Y%m%d')
