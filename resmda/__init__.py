@@ -16,11 +16,13 @@
 
 from resmda import utils
 from resmda.utils import Report
-from resmda.data_assimilation import esmda
+from resmda.data_assimilation import esmda, build_localization_matrix
 from resmda.reservoir_simulator import Simulator, RandomPermeability
 
 
 __all__ = ['reservoir_simulator', 'data_assimilation', 'utils',
-           'Simulator', 'RandomPermeability', 'esmda', 'Report']
+           'Simulator', 'RandomPermeability',
+           'esmda', 'build_localization_matrix',
+           'Report']
 
 __version__ = utils.__version__
