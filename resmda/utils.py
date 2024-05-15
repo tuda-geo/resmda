@@ -55,6 +55,7 @@ def rng(random=None):
 
 
     Returns
+    -------
     rng : random number generator
         A :class:`numpy.random.Generator` instance.
 

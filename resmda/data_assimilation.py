@@ -26,42 +26,47 @@ def __dir__():
 
 
 def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
-          callback_post=None, return_post_data=False, random=None):
-    """ESMDA algorithm (Emerick and Reynolds, 2013).
+          callback_post=None, return_post_data=False, random=None,
+          enable_localization=False, localization_matrix=None):
+    """ESMDA algorithm (Emerick and Reynolds, 2013) with optional localization.
 
 
     Parameters
     ----------
-
-    model_post : ndarray
+    model_prior : ndarray
         Prior models of dimension ``(ne, ...)``, where ``ne`` is the number of
         ensembles.
-
     forward : callable
         Forward model that takes an ndarray of the shape of the prior models
         ``(ne, ...)``, and returns a ndarray of the shape of the prior data
         ``(ne, nd)``; ``ne`` is the number of ensembles, ``nd`` the number of
         data.
-
     data_obs : ndarray
         Observed data of shape ``(nd)``.
-
-    sigma : float, ndarray
-
+    sigma : {float, ndarray}
+        Standard deviation(s) of the observation noise.
     alphas : {int, ndarray}, default: 4
-        es-mda inflation factor
-
+        Inflation factors for ES-MDA.
     data_prior : ndarray, default: None
-        (ne, nd)
-
-    vmin, vmax : float, default: None
-
-    return_data_post : bool, default: False
+        Prior data ensemble, of shape (ne, nd).
+    callback_post : function, default: None
+        Function to be executed after each ESMDA iteration.
+    return_post_data : bool, default: False
+        If true, returns data
+    random : {None, int,  np.random.Generator}, default: None
+        Seed or random generator for reproducibility.
+    enable_localization : bool, default: False
+        If True, apply localization to the Kalman gain matrix.
+    localization_matrix : ???, default: None
+        Localization matrix.
 
 
     Returns
     -------
-
+    model_post : ndarray
+        Posterior model ensemble.
+    data_post : ndarray, only returned if ``return_post_data=True``
+        Posterior simulated data ensemble.
 
     """
     # Get number of ensembles and time steps
@@ -122,6 +127,14 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
         # Calculate the Kalman gain
         K = CMD@Cinv
 
+        # TODO: Implement localization
+        if enable_localization and localization_matrix is not None:
+            localization_matrix = localization_matrix
+            K = K.reshape(-1, nd)
+            K = K * localization_matrix
+            # Reshape back to original shape
+            K = K.reshape(model_prior.shape[1], model_prior.shape[2], nd)
+
         # Update the ensemble parameters
         model_post += np.moveaxis(K @ (data_pert - data_prior).T, -1, 0)
 
@@ -131,3 +144,55 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
 
     # Return posterior model and corresponding data
     return model_post, forward(model_post)
+
+
+def convert_positions_to_indices(positions, grid_dimensions):
+    """Convert 2D grid positions to 1D indices assuming zero-indexed positions.
+
+    Parameters
+    ----------
+    positions : ndarray
+        Array of (x, y) positions in the grid.
+    grid_dimensions : tuple
+        Dimensions of the grid (nx, ny).
+
+    Returns
+    -------
+    indices : ndarray
+        Array of indices corresponding to the positions in a flattened array.
+
+    """
+    nx, ny = grid_dimensions
+    # Ensure the positions are zero-indexed and correctly calculated for
+    # row-major order
+    return positions[:, 1] * nx + positions[:, 0]
+
+
+def build_localization_matrix(cov_matrix, data_positions, grid_dimensions):
+    """Build a localization matrix
+
+    Build a localization matrix from a full covariance matrix based on specific
+    data positions.
+
+    Parameters
+    ----------
+    cov_matrix : ndarray
+        The full (nx*ny) x (nx*ny) covariance matrix.
+    data_positions : ndarray
+        Positions in the grid for each data point (e.g., wells), zero-indexed.
+    grid_dimensions : tuple
+        Dimensions of the grid (nx, ny).
+
+    Returns
+    -------
+    loc_matrix : ndarray
+        Localization matrix of shape (nx*ny, number of data positions).
+
+    """
+    # Convert 2D positions of data points to 1D indices suitable for accessing
+    # the covariance matrix
+    indices = convert_positions_to_indices(
+            data_positions, grid_dimensions).astype(int)
+    # Extract the columns from the covariance matrix corresponding to each data
+    # point's position
+    return cov_matrix[:, indices]
