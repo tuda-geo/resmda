@@ -1,6 +1,11 @@
-# Directories
+# Directories and file types
 __pycache__/
+*.pdf
 
+# Pytest and coverage related
+htmlcov
+.coverage
+.pytest_cache/
 
 # setuptools_scm
 resmda/version.py

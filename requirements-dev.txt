@@ -1,0 +1,11 @@
+# GLOBAL REQUIREMENTS
+-r requirements.txt
+
+# SETUP RELATED
+setuptools_scm
+
+# FOR TESTING
+flake8
+pytest
+coveralls
+pytest_cov
