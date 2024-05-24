@@ -1,0 +1,11 @@
+prune docs
+prune tests
+prune examples
+prune .github
+exclude MANIFEST.in
+exclude Makefile
+exclude requirements.txt
+exclude requirements-dev.txt
+exclude setup.cfg
+exclude .gitignore
+exclude .coveragerc

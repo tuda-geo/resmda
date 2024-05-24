@@ -1,0 +1,24 @@
+# GLOBAL REQUIREMENTS
+-r requirements.txt
+
+# SOFT DEPENDENCIES
+matplotlib
+
+# SETUP RELATED
+setuptools_scm
+
+# FOR DOCUMENTATION
+sphinx
+numpydoc
+sphinx_design
+sphinx_numfig
+sphinx_gallery
+pydata_sphinx_theme
+sphinx_automodapi
+ipykernel
+
+# FOR TESTING
+flake8
+pytest
+coveralls
+pytest_cov
