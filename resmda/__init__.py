@@ -14,6 +14,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+from resmda import utils
 from resmda.utils import Report
 from resmda.data_assimilation import esmda
 from resmda.reservoir_simulator import Simulator, RandomPermeability
