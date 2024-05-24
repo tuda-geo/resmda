@@ -60,7 +60,7 @@ def rng(random=None):
 
     """
     if isinstance(random, int):
-        return np.random.default_rng(int)
+        return np.random.default_rng(random)
     elif isinstance(random, np.random.Generator):
         return random
     else:
