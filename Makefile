@@ -48,5 +48,5 @@ clean:
 	rm -rf build/ dist/ .eggs/ resmda.egg-info/ resmda/version.py  # build
 	rm -rf */__pycache__/ */*/__pycache__/      # python cache
 	rm -rf .coverage htmlcov/ .pytest_cache/    # tests and coverage
-	rm -rf docs/gallery/*/ docs/gallery/*.zip docs/_build/ docs/api/resmda*  # docs
+	rm -rf docs/gallery/* docs/gallery/*.zip docs/_build/ docs/api/resmda*  # docs
 	rm -rf docs/savefig

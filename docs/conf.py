@@ -99,6 +99,9 @@ html_static_path = ['_static']
 # html_favicon = '_static/favicon.ico'
 
 html_theme_options = {
+    "logo": {
+        "text": "resmda",
+    },
     "github_url": "https://github.com/tuda-geo/resmda",
     # "use_edit_page_button": True,
 }

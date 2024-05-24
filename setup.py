@@ -2,10 +2,14 @@
 import os
 from setuptools import setup
 
+# Get README
+with open("README.rst") as f:
+    readme = f.read()
+
 setup(
     name="resmda",
     description="A simple 2D reservoir modeller plus ESMDA.",
-    long_description="A simple 2D reservoir modeller plus ESMDA.",
+    long_description=readme,
     author="Dieter Werthmüller, Gabriel Serrao Seabra",
     author_email="info@emsig.xyz",
     url="https://github.com/tuda-geo/resmda",

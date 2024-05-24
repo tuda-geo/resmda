@@ -1,12 +1,11 @@
 # Directories and file types
 __pycache__/
-*.pdf
 
 # Sphinx
 docs/_build/
 docs/api/resmda*
 docs/savefig/
-docs/gallery/*/
+docs/gallery/*
 
 # Pytest and coverage related
 htmlcov

@@ -14,3 +14,5 @@ User Guide
    :hidden:
 
    about
+   installation
+   api

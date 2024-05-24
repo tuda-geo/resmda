@@ -15,4 +15,10 @@ resmda Documentation
 
    manual/index
    gallery/index
-   api/index
+
+
+**TODOs**
+
+- Add tests
+- Use this ``resmda`` to reproduce Geirs example
+- Compare with existing esmda's

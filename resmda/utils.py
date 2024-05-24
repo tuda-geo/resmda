@@ -68,7 +68,7 @@ def rng(random=None):
 
 
 class Report(ScoobyReport):
-    """Print a Scooby report; see ``scooby.Report() for info."""
+    """Print a Scooby report; see ``scooby.Report()`` for info."""
 
     def __init__(self, **kwargs):
         """Initiate a scooby.Report instance."""

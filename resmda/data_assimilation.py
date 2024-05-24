@@ -25,16 +25,14 @@ def __dir__():
     return __all__
 
 
-# TODO: - use this esmda to run Geirs example
-#       - compare with GitLab/GitHub esmda's
-
-
 def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
           callback_post=None, return_post_data=False, random=None):
     """ESMDA algorithm (Emerick and Reynolds, 2013).
 
+
     Parameters
-    ---------
+    ----------
+
     model_post : ndarray
         Prior models of dimension ``(ne, ...)``, where ``ne`` is the number of
         ensembles.
