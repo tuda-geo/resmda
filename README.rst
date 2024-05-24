@@ -11,3 +11,4 @@ presented by Emerick and Reynolds, 2013.
 
 
 Available through pip: ``pip install resmda``.
+
