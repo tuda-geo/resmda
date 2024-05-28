@@ -94,7 +94,7 @@ pygments_style = 'friendly'
 
 # ==== 3. HTML settings ====
 html_theme = 'pydata_sphinx_theme'
-html_static_path = ['_static']
+# html_static_path = ['_static']
 # html_logo = '_static/empymod-logo.svg'
 # html_favicon = '_static/favicon.ico'
 

@@ -32,10 +32,6 @@ def __dir__():
     return __all__
 
 
-# Instantiate a random number generator ONCE
-RANDOM_NUMBER_GENERATOR = np.random.default_rng()
-
-
 def rng(random=None):
     """Module-wide Random Number Generator.
 
@@ -65,7 +61,9 @@ def rng(random=None):
     elif isinstance(random, np.random.Generator):
         return random
     else:
-        return RANDOM_NUMBER_GENERATOR
+        if not hasattr(rng, '_rng'):
+            rng._rng = np.random.default_rng()
+        return rng._rng
 
 
 class Report(ScoobyReport):

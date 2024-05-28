@@ -26,8 +26,8 @@ def __dir__():
 
 
 def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
-          callback_post=None, return_post_data=False, random=None,
-          enable_localization=False, localization_matrix=None):
+          callback_post=None, return_post_data=True, return_steps=False,
+          random=None, enable_localization=False, localization_matrix=None):
     """ESMDA algorithm (Emerick and Reynolds, 2013) with optional localization.
 
 
@@ -51,8 +51,11 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
         Prior data ensemble, of shape (ne, nd).
     callback_post : function, default: None
         Function to be executed after each ESMDA iteration.
-    return_post_data : bool, default: False
+    return_post_data : bool, default: True
         If true, returns data
+    return_steps : bool, default: False
+        If true, returns model (and data) of all ESMDA steps.
+        Setting ``return_steps`` to True wil enforce ``return_post_data``.
     random : {None, int,  np.random.Generator}, default: None
         Seed or random generator for reproducibility.
     enable_localization : bool, default: False
@@ -142,8 +145,22 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
         if callback_post:
             callback_post(model_post)
 
-    # Return posterior model and corresponding data
-    return model_post, forward(model_post)
+        if return_steps:
+            if i == 0:
+                all_models = np.zeros((alphas.size+1, *model_post.shape))
+                all_models[0, ...] = model_prior
+                all_data = np.zeros((alphas.size+1, *data_prior.shape))
+            all_models[i+1, ...] = model_post.copy()
+            all_data[i, ...] = data_prior
+
+    # Return posterior model and corresponding data (if wanted)
+    if return_steps:
+        all_data[-1, ...] = forward(model_post)
+        return all_models, all_data
+    elif return_post_data:
+        return model_post, forward(model_post)
+    else:
+        return model_post
 
 
 def convert_positions_to_indices(positions, grid_dimensions):
