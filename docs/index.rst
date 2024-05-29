@@ -15,6 +15,7 @@ resmda Documentation
 
    manual/index
    gallery/index
+   api/index
 
 
 **TODOs**
