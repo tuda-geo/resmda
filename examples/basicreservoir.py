@@ -1,6 +1,6 @@
 r"""
-Minimum example of resmda
-=========================
+2D Reservoir ESMDA example
+==========================
 
 Data Assimilation using ESMDA in Reservoir Simulation
 -----------------------------------------------------

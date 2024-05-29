@@ -30,6 +30,8 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
           random=None, enable_localization=False, localization_matrix=None):
     """ESMDA algorithm (Emerick and Reynolds, 2013) with optional localization.
 
+    ES-MDA as presented by [EmRe13]_.
+
 
     Parameters
     ----------
@@ -91,7 +93,7 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
 
     # Loop over alphas
     for i, alpha in enumerate(alphas):
-        print(f"ESMDA step {i+1}; α={alpha}")
+        print(f"ESMDA step {i+1: 3d}; α={alpha}")
 
         # == Step (a) of Emerick & Reynolds, 2013 ==
         # Run the ensemble from time zero.
