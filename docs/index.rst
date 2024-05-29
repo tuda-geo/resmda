@@ -21,7 +21,6 @@ resmda Documentation
 
 - Add tests
 - Finish docstrings & code documentation
-- Use this ``resmda`` to reproduce Geirs example
 - Compare with existing esmda's
 - docs:
 
