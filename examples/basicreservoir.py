@@ -1,6 +1,6 @@
 r"""
-Minimum example of resmda
-=========================
+2D Reservoir ESMDA example
+==========================
 
 Data Assimilation using ESMDA in Reservoir Simulation
 -----------------------------------------------------
@@ -8,10 +8,9 @@ Data Assimilation using ESMDA in Reservoir Simulation
 *Advanced Data Assimilation using Ensemble Smoother Multiple Data Assimilation
 (ESMDA) in Reservoir Simulation.*
 
-$$
-m_j^a = m_j^f + C_{MD}^f (C_{DD}^f + \alpha_i C_D)^{-1} (d_{uc,j} -
-d_j^f);\quad \text{for} \quad j=1, 2, \dots, N_e
-$$
+.. math::
+    m_j^a = m_j^f + C_{MD}^f (C_{DD}^f + \alpha_i C_D)^{-1} (d_{uc,j} -
+    d_j^f);\quad \text{for} \quad j=1, 2, \dots, N_e
 
 - Prior model: M (Ne, Nx, Ny)
 - Prior data: D (Ne, Nt)
@@ -90,6 +89,7 @@ for ax in axs[1, :]:
     ax.set_xlabel('x-direction')
 for ax in axs[:, 0]:
     ax.set_ylabel('y-direction')
+fig.show()
 
 
 ###############################################################################
@@ -119,6 +119,7 @@ ax.plot(time, data_obs, 'C3o', label='Obs. data')
 ax.legend()
 ax.set_xlabel('Time (???)')
 ax.set_ylabel('Pressure (???)')
+fig.show()
 
 
 ###############################################################################
@@ -158,6 +159,7 @@ ax[1].set_title('Post Mean')
 ax[1].imshow(perm_post.mean(axis=0).T)
 ax[2].set_title('"Truth"')
 ax[2].imshow(perm_true.T)
+fig.show()
 
 
 ###############################################################################
@@ -177,8 +179,8 @@ ax.plot(time, data_true, 'ko')
 ax.plot(time, data_obs, 'C3o')
 ax.set_xlabel('Time (???)')
 ax.set_ylabel('Pressure (???)')
+fig.show()
 
-plt.show()
 
 ###############################################################################
 

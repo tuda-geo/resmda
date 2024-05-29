@@ -20,5 +20,8 @@ resmda Documentation
 **TODOs**
 
 - Add tests
-- Use this ``resmda`` to reproduce Geirs example
+- Finish docstrings & code documentation
 - Compare with existing esmda's
+- docs:
+
+  - only deploy for versions

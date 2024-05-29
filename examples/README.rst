@@ -2,5 +2,3 @@
 
 Gallery
 =======
-
-TODO
