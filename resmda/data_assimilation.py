@@ -27,7 +27,7 @@ def __dir__():
 
 def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
           callback_post=None, return_post_data=True, return_steps=False,
-          random=None, enable_localization=False, localization_matrix=None):
+          random=None, localization_matrix=None):
     """ESMDA algorithm (Emerick and Reynolds, 2013) with optional localization.
 
     ES-MDA as presented by [EmRe13]_.
@@ -60,10 +60,8 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
         Setting ``return_steps`` to True wil enforce ``return_post_data``.
     random : {None, int,  np.random.Generator}, default: None
         Seed or random generator for reproducibility.
-    enable_localization : bool, default: False
-        If True, apply localization to the Kalman gain matrix.
-    localization_matrix : ???, default: None
-        Localization matrix.
+    localization_matrix : {ndarray, None}, default: None
+        If provided, apply localization to the Kalman gain matrix.
 
 
     Returns
@@ -132,35 +130,38 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
         # Calculate the Kalman gain
         K = CMD@Cinv
 
-        # TODO: Implement localization
-        if enable_localization and localization_matrix is not None:
-            localization_matrix = localization_matrix
-            K = K.reshape(-1, nd)
-            K = K * localization_matrix
-            # Reshape back to original shape
-            K = K.reshape(model_prior.shape[1], model_prior.shape[2], nd)
+        # Apply localization if provided
+        if localization_matrix is not None:
+            K *= localization_matrix[..., None]
 
         # Update the ensemble parameters
         model_post += np.moveaxis(K @ (data_pert - data_prior).T, -1, 0)
 
-        # Apply model parameter bounds.
+        # Apply any provided post-checks
         if callback_post:
             callback_post(model_post)
 
+        # If intermediate steps are wanted, store results
         if return_steps:
+            # Initiate output if first iteration
             if i == 0:
                 all_models = np.zeros((alphas.size+1, *model_post.shape))
                 all_models[0, ...] = model_prior
                 all_data = np.zeros((alphas.size+1, *data_prior.shape))
-            all_models[i+1, ...] = model_post.copy()
+            all_models[i+1, ...] = model_post
             all_data[i, ...] = data_prior
+
+    # Compute posterior data if wanted
+    if return_post_data or return_steps:
+        data_post = forward(model_post)
+        if return_steps:
+            all_data[-1, ...] = forward(model_post)
 
     # Return posterior model and corresponding data (if wanted)
     if return_steps:
-        all_data[-1, ...] = forward(model_post)
         return all_models, all_data
     elif return_post_data:
-        return model_post, forward(model_post)
+        return model_post, data_post
     else:
         return model_post
 

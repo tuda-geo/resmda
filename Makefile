@@ -35,7 +35,7 @@ html-noplot:
 	cd docs && make html-noplot
 
 html-clean:
-	cd docs && rm -rf api/resmda* gallery/*/ _build/ my*.json my*.txt && make html
+	cd docs && rm -rf api/resmda* gallery/* _build/ && make html
 
 preview:
 	xdg-open docs/_build/html/index.html
