@@ -102,6 +102,7 @@ html_theme_options = {
     "logo": {
         "text": "resmda",
     },
+    'navigation_with_keys': True,
     "github_url": "https://github.com/tuda-geo/resmda",
     # "use_edit_page_button": True,
 }
