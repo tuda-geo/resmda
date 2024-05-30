@@ -16,4 +16,5 @@ User Guide
    about
    installation
    references
+   license
 
