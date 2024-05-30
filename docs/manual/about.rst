@@ -4,8 +4,11 @@ About
 A simple 2D reservoir simulator and a straight-forward implementation of the
 basic *Ensemble Smoother with Multiple Data Assimilation* (ES-MDA) algorithm.
 
+.. _esmda:
+
 ES-MDA
 ------
+
 
 In the following an introduction to the ES-MDA (Ensemble Smoother with Multiple
 Data Assimilation) algorithm following [EmRe13]_:
