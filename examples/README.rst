@@ -1,4 +1,8 @@
-.. _sphx_glr_gallery:
+.. _resmda_gallery:
 
+=======
 Gallery
 =======
+
+:Release: |version|
+:Date: |today|

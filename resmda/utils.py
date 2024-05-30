@@ -35,7 +35,7 @@ def __dir__():
 def rng(random=None):
     """Module-wide Random Number Generator.
 
-    Mainly meant for internal use.
+    Instantiate a random number generator.
 
 
     Parameters

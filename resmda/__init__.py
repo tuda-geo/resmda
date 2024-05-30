@@ -20,9 +20,13 @@ from resmda.data_assimilation import esmda, build_localization_matrix
 from resmda.reservoir_simulator import Simulator, RandomPermeability
 
 
+# Initialize a random number generator.
+rng = utils.rng()
+
+
 __all__ = ['reservoir_simulator', 'data_assimilation', 'utils',
            'Simulator', 'RandomPermeability',
            'esmda', 'build_localization_matrix',
-           'Report']
+           'rng', 'Report']
 
 __version__ = utils.__version__

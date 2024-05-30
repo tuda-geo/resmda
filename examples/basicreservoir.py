@@ -2,24 +2,16 @@ r"""
 2D Reservoir ESMDA example
 ==========================
 
-Data Assimilation using ESMDA in Reservoir Simulation
------------------------------------------------------
+Ensemble Smoother Multiple Data Assimilation (ES-MDA) in Reservoir Simulation.
 
-*Advanced Data Assimilation using Ensemble Smoother Multiple Data Assimilation
-(ESMDA) in Reservoir Simulation.*
-
-.. math::
-    m_j^a = m_j^f + C_{MD}^f (C_{DD}^f + \alpha_i C_D)^{-1} (d_{uc,j} -
-    d_j^f);\quad \text{for} \quad j=1, 2, \dots, N_e
-
-- Prior model: M (Ne, Nx, Ny)
-- Prior data: D (Ne, Nt)
 """
 import numpy as np
 import matplotlib.pyplot as plt
 
 import resmda
 
+# For reproducibility, we instantiate a random number generator with a fixed
+# seed. For production, remove the seed!
 rng = np.random.default_rng(1848)
 
 # sphinx_gallery_thumbnail_number = 4

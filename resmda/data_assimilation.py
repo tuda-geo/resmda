@@ -18,7 +18,7 @@ import numpy as np
 
 from resmda.utils import rng
 
-__all__ = ['esmda']
+__all__ = ['esmda', 'build_localization_matrix']
 
 
 def __dir__():
@@ -26,12 +26,12 @@ def __dir__():
 
 
 def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
-          callback_post=None, return_post_data=True, return_steps=False,
-          random=None, localization_matrix=None):
-    """ESMDA algorithm (Emerick and Reynolds, 2013) with optional localization.
+          localization_matrix=None, callback_post=None, return_post_data=True,
+          return_steps=False, random=None):
+    """ES-MDA algorithm ([EmRe13]_) with optional localization.
 
-    ES-MDA as presented by [EmRe13]_.
-
+    Consult the section :ref:`esmda` in the manual for the theory and more
+    information about ES-MDA.
 
     Parameters
     ----------
@@ -52,16 +52,18 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
     data_prior : ndarray, default: None
         Prior data ensemble, of shape (ne, nd).
     callback_post : function, default: None
-        Function to be executed after each ESMDA iteration.
+        Function to be executed after each ES-MDA iteration to the posterior
+        model, ``callback_post(model_post)``.
     return_post_data : bool, default: True
-        If true, returns data
+        If true, returns also ``forward(model_post)``.
     return_steps : bool, default: False
-        If true, returns model (and data) of all ESMDA steps.
-        Setting ``return_steps`` to True wil enforce ``return_post_data``.
+        If true, returns model (and data) of all ES-MDA steps.
+        Setting ``return_steps`` to True enforces ``return_post_data=True``.
     random : {None, int,  np.random.Generator}, default: None
         Seed or random generator for reproducibility.
     localization_matrix : {ndarray, None}, default: None
-        If provided, apply localization to the Kalman gain matrix.
+        If provided, apply localization to the Kalman gain matrix, of shape
+        (model-shape, nd).
 
 
     Returns
@@ -91,7 +93,7 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
 
     # Loop over alphas
     for i, alpha in enumerate(alphas):
-        print(f"ESMDA step {i+1: 3d}; α={alpha}")
+        print(f"ES-MDA step {i+1: 3d}; α={alpha}")
 
         # == Step (a) of Emerick & Reynolds, 2013 ==
         # Run the ensemble from time zero.
@@ -132,7 +134,7 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
 
         # Apply localization if provided
         if localization_matrix is not None:
-            K *= localization_matrix[..., None]
+            K *= localization_matrix
 
         # Update the ensemble parameters
         model_post += np.moveaxis(K @ (data_pert - data_prior).T, -1, 0)
@@ -166,29 +168,7 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
         return model_post
 
 
-def convert_positions_to_indices(positions, grid_dimensions):
-    """Convert 2D grid positions to 1D indices assuming zero-indexed positions.
-
-    Parameters
-    ----------
-    positions : ndarray
-        Array of (x, y) positions in the grid.
-    grid_dimensions : tuple
-        Dimensions of the grid (nx, ny).
-
-    Returns
-    -------
-    indices : ndarray
-        Array of indices corresponding to the positions in a flattened array.
-
-    """
-    nx, ny = grid_dimensions
-    # Ensure the positions are zero-indexed and correctly calculated for
-    # row-major order
-    return positions[:, 1] * nx + positions[:, 0]
-
-
-def build_localization_matrix(cov_matrix, data_positions, grid_dimensions):
+def build_localization_matrix(cov_matrix, data_positions, shape):
     """Build a localization matrix
 
     Build a localization matrix from a full covariance matrix based on specific
@@ -197,22 +177,26 @@ def build_localization_matrix(cov_matrix, data_positions, grid_dimensions):
     Parameters
     ----------
     cov_matrix : ndarray
-        The full (nx*ny) x (nx*ny) covariance matrix.
+        The lower triangular covariance matrix (nx*ny, nx*ny).
     data_positions : ndarray
-        Positions in the grid for each data point (e.g., wells), zero-indexed.
-    grid_dimensions : tuple
+        Positions in the grid for each data point (e.g., wells), zero-indexed,
+        of size (nd, 2).
+    shape : tuple
         Dimensions of the grid (nx, ny).
 
     Returns
     -------
     loc_matrix : ndarray
-        Localization matrix of shape (nx*ny, number of data positions).
+        Localization matrix of shape (nx, ny, nd).
 
     """
     # Convert 2D positions of data points to 1D indices suitable for accessing
     # the covariance matrix
-    indices = convert_positions_to_indices(
-            data_positions, grid_dimensions).astype(int)
+    indices = data_positions[:, 1] * shape[0] + data_positions[:, 0]
+
+    # Create full matrix from lower triangular matrix
+    cov_matrix = cov_matrix + np.tril(cov_matrix, -1).T
+
     # Extract the columns from the covariance matrix corresponding to each data
-    # point's position
-    return cov_matrix[:, indices]
+    # point's position, and reshape.
+    return cov_matrix[:, indices.astype(int)].reshape((*shape, -1), order='F')

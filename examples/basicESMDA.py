@@ -83,7 +83,7 @@ def plot_result(mpost, dpost, dobs, title, ylim):
 
     # Plot Likelihood
     ax2.plot(
-        *pseudopdf(resmda.utils.rng().normal(dobs, size=(ne, dobs.size))),
+        *pseudopdf(resmda.rng.normal(dobs, size=(ne, dobs.size))),
         'C2', lw=2, label='Datum'
     )
 
@@ -133,7 +133,7 @@ ne = int(1e7)
 obs_std = 1.0
 
 # Prior: Let's start with ones as our prior guess
-mprior = resmda.utils.rng().normal(loc=1.0, scale=obs_std, size=(ne, 1))
+mprior = resmda.rng.normal(loc=1.0, scale=obs_std, size=(ne, 1))
 
 
 ###############################################################################

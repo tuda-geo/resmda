@@ -102,6 +102,7 @@ html_theme_options = {
     "logo": {
         "text": "resmda",
     },
+    'navigation_with_keys': True,
     "github_url": "https://github.com/tuda-geo/resmda",
     # "use_edit_page_button": True,
 }
@@ -116,3 +117,8 @@ html_context = {
 html_use_modindex = True
 html_file_suffix = '.html'
 htmlhelp_basename = 'resmda'
+html_css_files = [
+    "style.css",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/" +
+    "css/font-awesome.min.css"
+]
