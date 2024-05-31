@@ -1,0 +1,6 @@
+build_localization_matrix
+=========================
+
+.. currentmodule:: resmda.data_assimilation
+
+.. autofunction:: build_localization_matrix

@@ -1,0 +1,6 @@
+covariance
+==========
+
+.. currentmodule:: resmda.reservoir_simulator
+
+.. autofunction:: covariance
