@@ -112,7 +112,8 @@ for well in wells:
 
 
 def restrict_permeability(x):
-    x[:] = np.clip(x, perm_min, perm_max)
+    """Restrict possible permeabilities."""
+    np.clip(x, perm_min, perm_max, out=x)
 
 
 inp = {

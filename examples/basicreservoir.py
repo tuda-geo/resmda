@@ -42,10 +42,8 @@ dstd = 0.5
 
 # Observation location indices (should be well locations)
 ox, oy = 1, 1
-#  ox, oy = (1, 10, 20), (1, 20, 10)
 
 # Wells (if None, first and last cells are used with pressure 180 and 120)
-# wells = np.array([[15, 10, 180], [55, 25, 120], [30, 7, 140]])
 wells = None
 
 
@@ -120,7 +118,8 @@ fig.show()
 
 
 def restrict_permeability(x):
-    x[:] = np.clip(x, perm_min, perm_max)
+    """Restrict possible permeabilities."""
+    np.clip(x, perm_min, perm_max, out=x)
 
 
 perm_post, data_post = resmda.esmda(
