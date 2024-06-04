@@ -86,7 +86,6 @@ data_prior = sim(perm_prior)
 data_true = sim(perm_true)
 data_obs = rng.normal(data_true, dstd)
 data_obs[0, :3] = data_true[0, :3]
-print(data_obs.shape)
 
 
 ###############################################################################
@@ -113,7 +112,8 @@ for well in wells:
 
 
 def restrict_permeability(x):
-    x[:] = np.clip(x, perm_min, perm_max)
+    """Restrict possible permeabilities."""
+    np.clip(x, perm_min, perm_max, out=x)
 
 
 inp = {
