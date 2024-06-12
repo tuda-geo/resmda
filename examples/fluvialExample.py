@@ -35,10 +35,10 @@ The property of interest is called facies code and we will assign a fixed permea
 Later, we can distribute the permeability across the reservoir using the facies code and the variance approach as in the basis case
 
 '''
-facies_ensemble = xr.open_dataset('realizations.nc') 
-
+facies_ensemble = xr.open_dataset('/samoa/data/smrserraoseabr/GenerateModels/realizations.nc') 
+ne =100 #number of prior models
 reference_case = facies_ensemble.isel(Realization=0)
-prior_ensemble = facies_ensemble.isel(Realization=slice(1,1000))
+prior_ensemble = facies_ensemble.isel(Realization=slice(1,ne+1))
 
 fac_array = reference_case['facies code'].values.astype(float)
 fac_prior_array = prior_ensemble['facies code'].values.astype(float)
@@ -82,7 +82,15 @@ def assign_permeability(facies_array: np.array, perm_means: np.array, nx: int, n
 perm_true = assign_permeability(fac_array, perm_means, nx, ny, rng)
 perm_prior = assign_permeability(fac_prior_array, perm_means, nx, ny, rng)
 
-
+#%%
+#plot perm_true
+plt.imshow(perm_true.T)
+plt.colorbar(label='Log of Permeability (mD)')
+plt.xlabel('x-direction')
+plt.ylabel('y-direction')
+plt.title('True Permeability Map')
+plt.savefig(f'True_Permeability_Map_{ne}_Ensembles.png')
+plt.show()
 
 #%%
 
@@ -126,6 +134,7 @@ fig.colorbar(im, ax=axs, orientation='horizontal',
 for ax in axs:
     ax.set_xlabel('x-direction')
 axs[0].set_ylabel('y-direction')
+fig.savefig(f'QC_Models_{ne}_Ensembles.png')
 fig.show()
 #%%
 
@@ -167,7 +176,7 @@ ax.imshow(loc_mat.sum(axis=2).T)
 ax.contour(loc_mat.sum(axis=2).T, levels=[2.0, ], colors='w')
 for well in wells:
     ax.plot(well[0], well[1], ['C3v', 'C1^'][int(well[2] == 120)])
-
+fig.savefig(f'Localization_Matrix_{ne}_Ensembles.png')
 
 ###############################################################################
 # ES-MDA
@@ -227,7 +236,7 @@ axs[1, 1].contour(loc_mat.sum(axis=2).T, levels=[2.0, ], colors='w')
 for ax in axs.ravel():
     for well in wells:
         ax.plot(well[0], well[1], ['C3v', 'C1^'][int(well[2] == 120)])
-
+fig.savefig(f'Compare_Permeabilities_{ne}_Ensembles.png')
 
 ###############################################################################
 # Compare data
@@ -248,10 +257,49 @@ for i, ax in enumerate(axs[1, :]):
     ax.plot(time, data_obs[0, i::3], 'C3o')
     ax.set_xlabel('Time')
     ax.set_ylabel('Pressure')
-
+fig.savefig(f'Compare_Data_{ne}_Ensembles.png')
+plt.show()
 
 ###############################################################################
 
-resmda.Report()
-
 # %%
+#Plot posterior models individually
+
+# Create separate figures for with and without localization
+fig_nl, axs_nl = plt.subplots(3, 4, figsize=(12, 9), constrained_layout=True)
+fig_nl.suptitle('Without Localization')
+fig_wl, axs_wl = plt.subplots(3, 4, figsize=(12, 9), constrained_layout=True)
+fig_wl.suptitle('With Localization')
+model_indices = [0, 1, 2, 3]  # Indices of the models to display
+
+for i, model_idx in enumerate(model_indices):
+    # Without localization
+    im_nl_prior = axs_nl[0, i].imshow(perm_prior[model_idx, ...].T)
+    axs_nl[0, i].set_title(f'Prior Model {model_idx+1}')
+
+    im_nl_post = axs_nl[1, i].imshow(nl_perm_post[model_idx, ...].T)
+    axs_nl[1, i].set_title(f'Post Model {model_idx+1}')
+
+    diff_nl = nl_perm_post[model_idx, ...] - perm_prior[model_idx, ...]
+    im_nl_diff = axs_nl[2, i].imshow(diff_nl.T)
+    axs_nl[2, i].set_title(f'Difference Model {model_idx+1}')
+
+    # With localization
+    im_wl_prior = axs_wl[0, i].imshow(perm_prior[model_idx, ...].T)
+    axs_wl[0, i].set_title(f'Prior Model {model_idx+1}')
+
+    im_wl_post = axs_wl[1, i].imshow(wl_perm_post[model_idx, ...].T)
+    axs_wl[1, i].set_title(f'Post Model {model_idx+1}')
+
+    diff_wl = wl_perm_post[model_idx, ...] - perm_prior[model_idx, ...]
+    im_wl_diff = axs_wl[2, i].imshow(diff_wl.T)
+    axs_wl[2, i].set_title(f'Difference Model {model_idx+1}')
+
+# Add colorbars to the last column of each row for both figures
+for row in range(3):
+    fig_nl.colorbar(axs_nl[row, -1].get_images()[0], ax=axs_nl[row, :], location='right', aspect=20)
+    fig_wl.colorbar(axs_wl[row, -1].get_images()[0], ax=axs_wl[row, :], location='right', aspect=20)
+fig_nl.savefig(f'Posterior_Models_Without_Localization_{ne}_Ensembles.png')
+fig_wl.savefig(f'Posterior_Models_With_Localization_{ne}_Ensembles.png')
+# %%
+resmda.Report()
