@@ -13,9 +13,12 @@ ES-MDA
 In the following an introduction to the ES-MDA (Ensemble Smoother with Multiple
 Data Assimilation) algorithm following [EmRe13]_:
 
-In history-matching problems, it is common to only consider the
-parameter-estimation problem (neglecting model uncertainties). In that case,
-the analyzed vector of model parameters :math:`m^a` is given by
+In history-matching problems, it is common to consider solely the
+parameter-estimation problem and thereby neglecting model uncertainties. Thus,
+unlike EnKF, the parameters and states are always consistent (Thulin et al.,
+2007). This fact helps to explain the better data matches obtained by ES-MDA
+compared to EnKF. The analyzed vector of model parameters :math:`m^a` is given
+in that case by
 
 .. math::
     m_j^a = m_j^f + C_\text{MD}^f \left(C_\text{DD}^f + \alpha C_\text{D}
@@ -25,23 +28,24 @@ for ensembles :math:`j=1, 2, \dots, N_e`. Here,
 
 - :math:`^a`: analysis;
 - :math:`^f`: forecast;
-- :math:`m^f`: prior vector of model parameters;
-- :math:`d^f`: vector of predicted data;
+- :math:`m^f`: prior vector of model parameters (:math:`N_m`);
 - :math:`C_\text{MD}^f`: cross-covariance matrix between :math:`m^f` and
-  :math:`d^f`;
-- :math:`C_\text{DD}^f`: :math:`N_d \times N_d` auto-covariance matrix of
-  predicted data;
-- :math:`d_\text{obs}`: :math:`N_d`-dimensional vector of observed data;
-- :math:`d_\text{uc} = d_\text{obs} + \sqrt{\alpha}C_\text{D}^{1/2} z_d, \ z_d
-  \sim \mathcal{N}(0, I_{N_d})`;
-- :math:`C_\text{D}`: :math:`N_d \times N_d` covariance matrix of observed data
-  measurement errors;
-- :math:`\alpha`: ES-MDA coefficient.
+  :math:`d^f` (:math:`N_m \times N_d`);
+- :math:`C_\text{DD}^f`:  auto-covariance matrix of predicted data
+  (:math:`N_d \times N_d`);
+- :math:`C_\text{D}`: covariance matrix of observed data measurement errors
+  (:math:`N_d \times N_d`);
+- :math:`\alpha`: ES-MDA coefficient;
+- :math:`d_\text{uc}` : vector of perturbed data, obtained from the
+  vector of observed data, :math:`d_\text{obs}` (:math:`N_d`);
+- :math:`d^f`: vector of predicted data (:math:`N_d`).
 
 The prior vector of model parameters, :math:`m^f_j`, can in reality be
 :math:`j` possible models :math:`m^f` given from an analyst (e.g., the
 geologist). In theoretical tests, these are usually created by perturbing the
 prior :math:`m^f` by, e.g., adding random Gaussian noise.
+
+The ES-MDA algorithm follows [EmRe13]_:
 
 1. Choose the number of data assimilations, :math:`N_a`, and the coefficients
    :math:`\alpha_i` for :math:`i = 1, \dots, N_a`.
@@ -73,13 +77,11 @@ method. In this case, we start assimilating data with a large value of
 :math:`\alpha`, which reduces the magnitude of the initial updates; then, we
 gradually decrease :math:`\alpha`.
 
-For ES-MDA, we only consider the parameter-estimation problem. Thus, unlike EnKF, the parameters and states are always consistent (Thulin et al., 2007). This fact helps to explain the better data matches obtained by ES-MDA compared to EnKF.
-
 
 Reservoir Model
 ---------------
 
 The implemented small 2D Reservoir Simulator was created by following the
-course **AESM304A - Flow and Simulation of Subsurface processes** at Delft
-University of Technology (TUD); this particular part was taught by Dr. D.V.
-Voskov, https://orcid.org/0000-0002-5399-1755.
+course material of **AESM304A - Flow and Simulation of Subsurface processes**
+at Delft University of Technology (TUD); this particular part was taught by Dr.
+D.V. Voskov, https://orcid.org/0000-0002-5399-1755.

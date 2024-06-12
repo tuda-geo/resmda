@@ -1,5 +1,7 @@
 # Directories and file types
 __pycache__/
+*.nc
+*.pdf
 
 # Sphinx
 docs/_build/
