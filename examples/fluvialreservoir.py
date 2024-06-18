@@ -13,6 +13,12 @@ reproduce the facies.
 
 
 """
+import os
+import json
+
+# To retrieve the data, you need to have pooch installed:
+# ``pip install pooch`` or ``conda install -c conda-forge pooch``
+import pooch
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -33,8 +39,8 @@ data_path = os.path.join('..', 'download', '')
 
 fname = 'facies.npy'
 pooch.retrieve(
-    'https://raw.github.com/emsig/data/2021-05-21/emg3d/surveys/'+fname,
-    'hashTODO',
+    'https://raw.github.com/tuda-geo/data/2024-06-18/resmda/'+fname,
+    '4bfe56c836bf17ca63453c37e5da91cb97bbef8cc6c08d605f70bd64fe7488b2',
     fname=fname,
     path=data_path,
 )
@@ -204,7 +210,6 @@ axs[1, 1].contour(loc_mat.sum(axis=2).T, levels=[2.0, ], colors='w')
 for ax in axs.ravel():
     for well in wells:
         ax.plot(well[0], well[1], ['C3v', 'C1^'][int(well[2] == 120)])
-fig.savefig(f'Compare_Permeabilities_{ne}_Ensembles.png')
 
 
 ###############################################################################
@@ -226,7 +231,6 @@ for i, ax in enumerate(axs[1, :]):
     ax.plot(time, data_obs[0, i::3], 'C3o')
     ax.set_xlabel('Time')
     ax.set_ylabel('Pressure')
-fig.savefig(f'Compare_Data_{ne}_Ensembles.png')
 fig.show()
 
 ###############################################################################
@@ -235,26 +239,24 @@ fig.show()
 #
 # .. note::
 #
-#     The following sections are about how to reproduce the facies data
-#     ``facies.npz``. This was created using ``geomodpy``.
+#     The following cell is about how to reproduce the facies data loaded in
+#     ``facies.npy``. This was created using ``geomodpy``.
 #
-# ``geomodpy`` (Guillaume Rongier, 2023) is not open-source yet. The
-# functionality of geomodpy that we use here is a python wrapper for the
-# open-source Fortran library FLUVSIM:
+#     ``geomodpy`` (Guillaume Rongier, 2023) is not open-source yet. The
+#     functionality of geomodpy that we use here is a python wrapper for the
+#     open-source Fortran library ``FLUVSIM``:
 #
-#     **Deutsch, C. V., and T. T. Tran**, 2002, FLUVSIM: a program for
-#     object-based stochastic modeling of fluvial depositional systems:
-#     Computers & Geosciences, 28(4), 525--535.
+#         **Deutsch, C. V., and T. T. Tran**, 2002, FLUVSIM: a program for
+#         object-based stochastic modeling of fluvial depositional systems:
+#         Computers & Geosciences, 28(4), 525--535.
 #
-#     DOI: `10.1016/S0098-3004(01)00075-9
-#     <https://doi.org/10.1016/S0098-3004(01)00075-9>`_.
+#         DOI: `10.1016/S0098-3004(01)00075-9
+#         <https://doi.org/10.1016/S0098-3004(01)00075-9>`_.
 #
-#
-# Required imports
-# ----------------
 #
 # .. code-block:: python
 #
+#     # ==== Required imports ====
 #     import json
 #     import numpy as np
 #
@@ -264,16 +266,12 @@ fig.show()
 #     # For reproducibility, we instantiate a random number generator with a
 #     # fixed seed. For production, remove the seed!
 #     rng = np.random.default_rng(1848)
-
-
-###############################################################################
-# Define the geological parameters
-# --------------------------------
-# Here we define the geological parameters by means of their normal
-# distribution parameters
 #
 #
-# .. code-block:: python
+#     # ==== Define the geological parameters ====
+#
+#     # Here we define the geological parameters by means of their normal
+#     # distribution parameters
 #
 #     # Each tuple stands for (mean, std); lists contain several of them.
 #     geol_distributions = {
@@ -296,7 +294,7 @@ fig.show()
 #         """Generate geological parameters from normal distributions.
 #
 #         Expects for each parameter a tuple of two values, or a list
-#         containing tuples of two values.
+#         containing tuples of two values each.
 #         """
 #         geol_params = {}
 #         for param, dist in geol_dists.items():
@@ -307,13 +305,9 @@ fig.show()
 #             else:
 #                 geol_params[param] = rng.normal(*dist)
 #         return geol_params
-
-
-###############################################################################
-# Create the facies
-# -----------------
 #
-# .. code-block:: python
+#
+#     # ==== Create the facies ====
 #
 #     # Number of sets and realizations
 #     nsets = 2
@@ -343,18 +337,33 @@ fig.show()
 #
 #         realizations = fluvsim.run().data_vars['facies code'].values
 #         facies[i*nreal:(i+1)*nreal, ...] = realizations.astype('i4')
+#
+#
+#     # ==== Save the output ====
+#
+#     # Save the input parameters to FLUVSIM as a json.
+#     with open('facies.json', "w") as f:
+#         json.dump(all_params, f, indent=2)
+#     # Save the facies values as a compressed npy-file.
+#     np.save('facies', facies.squeeze(), allow_pickle=False)
 
 
 ###############################################################################
-# Save the output
-# ---------------
-#
-# .. code-block:: python
-#
-#     with open('facies.json', "w") as f:
-#         json.dump(all_params, f, indent=2)
-#     np.save('facies', facies.squeeze(), allow_pickle=False)
+# Input parameters to ``FLUVSIM``
+# -------------------------------
+# For reproducibility purposes we print here the used input values to FLUVSIM.
+# These are, just as the data themselves, online at
+# https://github.com/tuda-geo/data/resmda.
 
+fname = 'facies.json'
+pooch.retrieve(
+    'https://raw.github.com/tuda-geo/data/2024-06-18/resmda/'+fname,
+    'db2cb8a620775c68374c24a4fa811f6350381c7fc98a823b9571136d307540b4',
+    fname=fname,
+    path=data_path,
+)
+with open(data_path + fname, 'r') as f:
+    print(json.dumps(json.load(f), indent=2))
 
 ###############################################################################
 resmda.Report()

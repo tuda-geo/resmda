@@ -9,6 +9,7 @@ docs/_build/
 docs/api/resmda*
 docs/savefig/
 docs/gallery/*
+download/
 
 # Pytest and coverage related
 htmlcov
