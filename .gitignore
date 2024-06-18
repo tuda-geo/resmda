@@ -2,6 +2,7 @@
 __pycache__/
 *.nc
 *.pdf
+*.zip
 
 # Sphinx
 docs/_build/
