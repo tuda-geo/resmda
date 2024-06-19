@@ -210,15 +210,15 @@ wl_perm_post, wl_data_post = resmda.esmda(**inp, localization_matrix=loc_mat)
 fig, axs = plt.subplots(
     2, 2, figsize=(6, 6), sharex=True, sharey=True, constrained_layout=True)
 axs[0, 0].set_title('Prior Mean')
-axs[0, 0].imshow(perm_prior.mean(axis=0).T)
+axs[0, 0].imshow(perm_prior.mean(axis=0).T, vmin=perm_min, vmax=perm_max)
 axs[0, 1].set_title('"Truth"')
-axs[0, 1].imshow(perm_true.T)
+axs[0, 1].imshow(perm_true.T, vmin=perm_min, vmax=perm_max)
 
 
 axs[1, 0].set_title('Post Mean without localization')
-axs[1, 0].imshow(nl_perm_post.mean(axis=0).T)
+axs[1, 0].imshow(nl_perm_post.mean(axis=0).T, vmin=perm_min, vmax=perm_max)
 axs[1, 1].set_title('Post Mean with localization')
-axs[1, 1].imshow(wl_perm_post.mean(axis=0).T)
+axs[1, 1].imshow(wl_perm_post.mean(axis=0).T, vmin=perm_min, vmax=perm_max)
 axs[1, 1].contour(loc_mat.sum(axis=2).T, levels=[2.0, ], colors='w')
 
 for ax in axs.ravel():
@@ -259,7 +259,7 @@ fig.show()
 #
 #     ``geomodpy`` (Guillaume Rongier, 2023) is not open-source yet. The
 #     functionality of geomodpy that we use here is a python wrapper for the
-#     open-source Fortran library ``FLUVSIM``:
+#     Fortran library ``FLUVSIM`` published in:
 #
 #         **Deutsch, C. V., and T. T. Tran**, 2002, FLUVSIM: a program for
 #         object-based stochastic modeling of fluvial depositional systems:

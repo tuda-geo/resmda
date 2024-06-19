@@ -22,7 +22,7 @@ rng = np.random.default_rng(2020)
 # ----------------
 
 # Grid extension
-nx = 30
+nx = 35
 ny = 30
 nc = nx*ny
 
@@ -100,8 +100,10 @@ loc_mat = resmda.build_localization_matrix(RP.cov, nd_positions, (nx, ny))
 
 # QC localization matrix
 fig, ax = plt.subplots(1, 1, sharex=True, sharey=True, constrained_layout=True)
-ax.imshow(loc_mat.sum(axis=2).T)
+ax.imshow(loc_mat.sum(axis=2).T, origin='lower')
 ax.contour(loc_mat.sum(axis=2).T, levels=[2.0, ], colors='w')
+ax.set_xlabel('x-direction')
+ax.set_ylabel('y-direction')
 for well in wells:
     ax.plot(well[0], well[1], ['C3v', 'C1^'][int(well[2] == 120)])
 fig.show()
@@ -151,20 +153,26 @@ wl_perm_post, wl_data_post = resmda.esmda(**inp, localization_matrix=loc_mat)
 fig, axs = plt.subplots(
     2, 2, figsize=(6, 6), sharex=True, sharey=True, constrained_layout=True)
 axs[0, 0].set_title('Prior Mean')
-axs[0, 0].imshow(perm_prior.mean(axis=0).T)
+im = axs[0, 0].imshow(perm_prior.mean(axis=0).T, origin='lower')
 axs[0, 1].set_title('"Truth"')
-axs[0, 1].imshow(perm_true.T)
+axs[0, 1].imshow(perm_true.T, origin='lower')
 
 
 axs[1, 0].set_title('Post Mean without localization')
-axs[1, 0].imshow(nl_perm_post.mean(axis=0).T)
+axs[1, 0].imshow(nl_perm_post.mean(axis=0).T, origin='lower')
 axs[1, 1].set_title('Post Mean with localization')
-axs[1, 1].imshow(wl_perm_post.mean(axis=0).T)
+axs[1, 1].imshow(wl_perm_post.mean(axis=0).T, origin='lower')
 axs[1, 1].contour(loc_mat.sum(axis=2).T, levels=[2.0, ], colors='w')
+fig.colorbar(im, ax=axs, orientation='horizontal',
+             label='Log of Permeability (mD)')
 
 for ax in axs.ravel():
     for well in wells:
         ax.plot(well[0], well[1], ['C3v', 'C1^'][int(well[2] == 120)])
+for ax in axs[1, :].ravel():
+    ax.set_xlabel('x-direction')
+for ax in axs[:, 0].ravel():
+    ax.set_ylabel('y-direction')
 fig.show()
 
 
