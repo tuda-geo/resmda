@@ -4,20 +4,32 @@ r"""
 
 In contrast to the basic reservoir example
 :ref:`sphx_glr_gallery_basicreservoir.py`, where a single facies was used, this
-example uses fluvial models. It also makes use of localization as explained in
+example uses fluvial models containing different facies. It also compares the
+use of ES-MDA with and without localization, as explained in
 :ref:`sphx_glr_gallery_localization.py`.
 
 The fluvial models were generated with ``FLUVSIM`` through ``geomodpy``, for
 more information see towards the end of the example where the code is shown to
 reproduce the facies.
 
+.. note::
+
+    To retrieve the data, you need to have ``pooch`` installed:
+
+    .. code-block:: bash
+
+        pip install pooch
+
+    or
+
+    .. code-block:: bash
+
+        conda install -c conda-forge pooch
 
 """
 import os
 import json
 
-# To retrieve the data, you need to have pooch installed:
-# ``pip install pooch`` or ``conda install -c conda-forge pooch``
 import pooch
 import numpy as np
 import matplotlib.pyplot as plt
@@ -62,6 +74,7 @@ for i in range(ne):
         clim=[-0.5, 2.5], origin='lower'
     )
 fig.colorbar(im, ax=axs, ticks=[0, 1, 2], label='Facies code')
+fig.show()
 
 
 ###############################################################################
@@ -89,6 +102,7 @@ fig.suptitle('Permeabilities')
 for i in range(ne):
     im = axs[i].imshow(permeabilities[i, ...], origin='lower')
 fig.colorbar(im, ax=axs)
+fig.show()
 
 
 ###############################################################################
@@ -210,6 +224,7 @@ axs[1, 1].contour(loc_mat.sum(axis=2).T, levels=[2.0, ], colors='w')
 for ax in axs.ravel():
     for well in wells:
         ax.plot(well[0], well[1], ['C3v', 'C1^'][int(well[2] == 120)])
+fig.show()
 
 
 ###############################################################################

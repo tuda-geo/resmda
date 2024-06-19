@@ -104,6 +104,7 @@ ax.imshow(loc_mat.sum(axis=2).T)
 ax.contour(loc_mat.sum(axis=2).T, levels=[2.0, ], colors='w')
 for well in wells:
     ax.plot(well[0], well[1], ['C3v', 'C1^'][int(well[2] == 120)])
+fig.show()
 
 
 ###############################################################################
@@ -164,6 +165,7 @@ axs[1, 1].contour(loc_mat.sum(axis=2).T, levels=[2.0, ], colors='w')
 for ax in axs.ravel():
     for well in wells:
         ax.plot(well[0], well[1], ['C3v', 'C1^'][int(well[2] == 120)])
+fig.show()
 
 
 ###############################################################################
@@ -185,6 +187,7 @@ for i, ax in enumerate(axs[1, :]):
     ax.plot(time, data_obs[0, i::3], 'C3o')
     ax.set_xlabel('Time')
     ax.set_ylabel('Pressure')
+fig.show()
 
 
 ###############################################################################
