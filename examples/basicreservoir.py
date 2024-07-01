@@ -21,7 +21,7 @@ rng = np.random.default_rng(1848)
 # ----------------
 
 # Grid extension
-nx = 25
+nx = 30
 ny = 25
 nc = nx*ny
 
@@ -61,23 +61,22 @@ perm_true = RP(1, random=rng)
 perm_prior = RP(ne, random=rng)
 
 
-# TODO: change scale in imshow to represent meters
-
 # QC covariance, reference model, and first two random models
-fig, axs = plt.subplots(2, 2, constrained_layout=True)
+pinp = {'origin': 'lower', 'vmin': perm_min, 'vmax': perm_max}
+fig, axs = plt.subplots(2, 2, figsize=(6, 6), constrained_layout=True)
 axs[0, 0].set_title('Model')
-im = axs[0, 0].imshow(perm_true.T, vmin=perm_min, vmax=perm_max)
+im = axs[0, 0].imshow(perm_true.T, **pinp)
 axs[0, 1].set_title('Lower Covariance Matrix')
 im2 = axs[0, 1].imshow(RP.cov, cmap='plasma')
 axs[1, 0].set_title('Random Model 1')
-axs[1, 0].imshow(perm_prior[0, ...].T, vmin=perm_min, vmax=perm_max)
+axs[1, 0].imshow(perm_prior[0, ...].T, **pinp)
 axs[1, 1].set_title('Random Model 2')
-axs[1, 1].imshow(perm_prior[1, ...].T, vmin=perm_min, vmax=perm_max)
+axs[1, 1].imshow(perm_prior[1, ...].T, **pinp)
 fig.colorbar(im, ax=axs[1, :], orientation='horizontal',
              label='Log of Permeability (mD)')
-for ax in axs[1, :]:
+for ax in axs[1, :].ravel():
     ax.set_xlabel('x-direction')
-for ax in axs[:, 0]:
+for ax in axs[:, 0].ravel():
     ax.set_ylabel('y-direction')
 fig.show()
 
@@ -142,14 +141,17 @@ perm_post, data_post = resmda.esmda(
 # models. Here, we visualize the first three realizations from both the prior
 # and posterior ensembles to see how the models have been updated.
 
+# TODO: change from mean to a particular example
+
 # Plot posterior
 fig, ax = plt.subplots(1, 3, figsize=(12, 5))
 ax[0].set_title('Prior Mean')
-ax[0].imshow(perm_prior.mean(axis=0).T)
+im = ax[0].imshow(perm_prior.mean(axis=0).T, **pinp)
 ax[1].set_title('Post Mean')
-ax[1].imshow(perm_post.mean(axis=0).T)
+ax[1].imshow(perm_post.mean(axis=0).T, **pinp)
 ax[2].set_title('"Truth"')
-ax[2].imshow(perm_true.T)
+ax[2].imshow(perm_true.T, **pinp)
+fig.colorbar(im, ax=ax[2], label='Log of Permeability (mD)')
 fig.show()
 
 

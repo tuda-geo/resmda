@@ -57,6 +57,7 @@ for i, b in enumerate([0.0, 0.2]):
     axs[i].plot(px, forward(px, b))
     axs[i].set_xlabel('x')
     axs[i].set_ylabel('y')
+fig.show()
 
 
 ###############################################################################
