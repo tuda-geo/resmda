@@ -1,7 +1,6 @@
 import time
 import warnings
 from resmda import __version__
-from sphinx_gallery.sorting import FileNameSortKey
 
 # ==== 1. Extensions  ====
 
@@ -43,7 +42,7 @@ sphinx_gallery_conf = {
     # Patter to search for example files
     "filename_pattern": r"\.py",
     # Sort gallery example by file name instead of number of lines (default)
-    "within_subsection_order": FileNameSortKey,
+    "within_subsection_order": "FileNameSortKey",
     # Remove the settings (e.g., sphinx_gallery_thumbnail_number)
     'remove_config_comments': True,
     # Show memory
