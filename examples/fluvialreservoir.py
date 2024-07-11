@@ -5,7 +5,7 @@ r"""
 In contrast to the basic reservoir example
 :ref:`sphx_glr_gallery_basicreservoir.py`, where a single facies was used, this
 example uses fluvial models containing different facies. It also compares the
-use of ES-MDA with and without localization, as explained in
+use of ES-MDA with and without localization, as explained in the example
 :ref:`sphx_glr_gallery_localization.py`.
 
 The fluvial models were generated with ``FLUVSIM`` through ``geomodpy``, for
@@ -38,10 +38,10 @@ import resmda
 
 # For reproducibility, we instantiate a random number generator with a fixed
 # seed. For production, remove the seed!
-rng = np.random.default_rng(1848)
+rng = np.random.default_rng(1324)
 
 # Adjust this path to a folder of your choice.
-data_path = os.path.join('..', 'download', '')
+data_path = os.path.join("..", "download", "")
 
 # sphinx_gallery_thumbnail_number = 3
 
@@ -49,10 +49,10 @@ data_path = os.path.join('..', 'download', '')
 # Load and plot the facies
 # ------------------------
 
-fname = 'facies.npy'
+fname = "facies.npy"
 pooch.retrieve(
-    'https://raw.github.com/tuda-geo/data/2024-06-18/resmda/'+fname,
-    '4bfe56c836bf17ca63453c37e5da91cb97bbef8cc6c08d605f70bd64fe7488b2',
+    "https://raw.github.com/tuda-geo/data/2024-06-18/resmda/"+fname,
+    "4bfe56c836bf17ca63453c37e5da91cb97bbef8cc6c08d605f70bd64fe7488b2",
     fname=fname,
     path=data_path,
 )
@@ -63,17 +63,16 @@ ne, nx, ny = facies.shape
 perm_means = [0.1, 5.0, 3.0]
 
 # Plot the facies
-fig, axs = plt.subplots(2, 5, figsize=(8, 3), sharex=True, sharey=True,
-                        constrained_layout=True)
+fig, axs = plt.subplots(
+    2, 5, figsize=(8, 3), sharex=True, sharey=True, constrained_layout=True)
 axs = axs.ravel()
-code_to_perm = [str(i)+" = "+str(p) for i, p in enumerate(perm_means)]
-fig.suptitle(f'Facies: {code_to_perm}')
+fig.suptitle(f"Facies {[f'{i} = {p}' for i, p in enumerate(perm_means)]}")
 for i in range(ne):
     im = axs[i].imshow(
         facies[i, ...], cmap=plt.get_cmap("Accent", 3),
-        clim=[-0.5, 2.5], origin='lower'
+        clim=[-0.5, 2.5], origin="lower"
     )
-fig.colorbar(im, ax=axs, ticks=[0, 1, 2], label='Facies code')
+fig.colorbar(im, ax=axs, ticks=[0, 1, 2], label="Facies code")
 fig.show()
 
 
@@ -95,12 +94,12 @@ for code, mean in enumerate(perm_means):
     mask = facies == code
     permeabilities[mask] = RP(ne, perm_mean=mean)[mask]
 
-fig, axs = plt.subplots(2, 5, figsize=(8, 3), sharex=True, sharey=True,
-                        constrained_layout=True)
+fig, axs = plt.subplots(
+    2, 5, figsize=(8, 3), sharex=True, sharey=True, constrained_layout=True)
 axs = axs.ravel()
-fig.suptitle('Permeabilities')
+fig.suptitle("Permeabilities")
 for i in range(ne):
-    im = axs[i].imshow(permeabilities[i, ...], origin='lower')
+    im = axs[i].imshow(permeabilities[i, ...], origin="lower")
 fig.colorbar(im, ax=axs)
 fig.show()
 
@@ -121,6 +120,7 @@ nt = time.size
 # Assumed standard deviation of our data
 dstd = 0.5
 
+# Measurement points
 ox = (5, 15, 24)
 oy = (5, 10, 24)
 
@@ -129,9 +129,9 @@ nd = time.size * len(ox)
 
 # Wells
 wells = np.array([
-    [5, 5, 180], [5, 12, 120],
-    [15, 10, 180], [20, 5, 120],
-    [24, 24, 180], [24, 17, 120]
+    [ox[0], oy[0], 180], [5, 12, 120],
+    [ox[1], oy[1], 180], [20, 5, 120],
+    [ox[2], oy[2], 180], [24, 17, 120]
 ])
 
 
@@ -177,14 +177,14 @@ def restrict_permeability(x):
 
 
 inp = {
-    'model_prior': perm_prior,
-    'forward': sim,
-    'data_obs': data_obs,
-    'sigma': dstd,
-    'alphas': 4,
-    'data_prior': data_prior,
-    'callback_post': restrict_permeability,
-    'random': rng,
+    "model_prior": perm_prior,
+    "forward": sim,
+    "data_obs": data_obs,
+    "sigma": dstd,
+    "alphas": 4,
+    "data_prior": data_prior,
+    "callback_post": restrict_permeability,
+    "random": rng,
 }
 
 
@@ -209,22 +209,21 @@ wl_perm_post, wl_data_post = resmda.esmda(**inp, localization_matrix=loc_mat)
 # Plot posterior
 fig, axs = plt.subplots(
     2, 2, figsize=(6, 6), sharex=True, sharey=True, constrained_layout=True)
-axs[0, 0].set_title('Prior Mean')
+axs[0, 0].set_title("Prior Mean")
 axs[0, 0].imshow(perm_prior.mean(axis=0).T, vmin=perm_min, vmax=perm_max)
-axs[0, 1].set_title('"Truth"')
+axs[0, 1].set_title("'Truth'")
 axs[0, 1].imshow(perm_true.T, vmin=perm_min, vmax=perm_max)
 
 
-axs[1, 0].set_title('Post Mean without localization')
+axs[1, 0].set_title("Post Mean without localization")
 axs[1, 0].imshow(nl_perm_post.mean(axis=0).T, vmin=perm_min, vmax=perm_max)
-axs[1, 1].set_title('Post Mean with localization')
+axs[1, 1].set_title("Post Mean with localization")
 axs[1, 1].imshow(wl_perm_post.mean(axis=0).T, vmin=perm_min, vmax=perm_max)
-axs[1, 1].contour(loc_mat.sum(axis=2).T, levels=[2.0, ], colors='w')
+axs[1, 1].contour(loc_mat.sum(axis=2).T, levels=[2.0, ], colors="w")
 
 for ax in axs.ravel():
     for well in wells:
-        ax.plot(well[0], well[1], ['C3v', 'C1^'][int(well[2] == 120)])
-fig.show()
+        ax.plot(well[0], well[1], ["C3v", "C1^"][int(well[2] == 120)])
 
 
 ###############################################################################
@@ -234,19 +233,22 @@ fig.show()
 # QC data and priors
 fig, axs = plt.subplots(
     2, 3, figsize=(8, 5), sharex=True, sharey=True, constrained_layout=True)
-fig.suptitle('Prior and posterior data')
+fig.suptitle("Prior and posterior data")
 for i, ax in enumerate(axs[0, :]):
-    ax.plot(time, data_prior[..., i::3].T, color='.6', alpha=0.5)
-    ax.plot(time, nl_data_post[..., i::3].T, color='C0', alpha=0.5)
-    ax.plot(time, data_obs[0, i::3], 'C3o')
-    ax.set_ylabel('Pressure')
+    ax.plot(time*24*60*60, data_prior[..., i::3].T, color=".6", alpha=0.5)
+    ax.plot(time*24*60*60, nl_data_post[..., i::3].T, color="C0", alpha=0.5)
+    ax.plot(time*24*60*60, data_obs[0, i::3], "C3o")
 for i, ax in enumerate(axs[1, :]):
-    ax.plot(time, data_prior[..., i::3].T, color='.6', alpha=0.5)
-    ax.plot(time, wl_data_post[..., i::3].T, color='C0', alpha=0.5)
-    ax.plot(time, data_obs[0, i::3], 'C3o')
-    ax.set_xlabel('Time')
-    ax.set_ylabel('Pressure')
-fig.show()
+    ax.plot(time*24*60*60, data_prior[..., i::3].T, color=".6", alpha=0.5)
+    ax.plot(time*24*60*60, wl_data_post[..., i::3].T, color="C0", alpha=0.5)
+    ax.plot(time*24*60*60, data_obs[0, i::3], "C3o")
+    ax.set_xlabel("Time (s)")
+for i, ax in enumerate(axs[:, 0]):
+    ax.set_ylabel("Pressure (bar)")
+for i, txt in enumerate(["No l", "L"]):
+    axs[i, 2].yaxis.set_label_position("right")
+    axs[i, 2].set_ylabel(f"{txt}ocalization")
+
 
 ###############################################################################
 # Reproduce the facies
@@ -290,18 +292,18 @@ fig.show()
 #
 #     # Each tuple stands for (mean, std); lists contain several of them.
 #     geol_distributions = {
-#         'channel_orientation': (60, 20),
-#         'channel_amplitude': [(100, 1), (250, 1), (400, 1)],
-#         'channel_wavelength': [(1000, 5), (2000, 5), (3000, 5)],
-#         'channel_thickness': [(4, 0.1), (8, 0.1), (11, 0.1)],
-#         'channel_thickness_undulation': (1, 0.02),
-#         'channel_thickness_undulation_wavelength': [
+#         "channel_orientation": (60, 20),
+#         "channel_amplitude": [(100, 1), (250, 1), (400, 1)],
+#         "channel_wavelength": [(1000, 5), (2000, 5), (3000, 5)],
+#         "channel_thickness": [(4, 0.1), (8, 0.1), (11, 0.1)],
+#         "channel_thickness_undulation": (1, 0.02),
+#         "channel_thickness_undulation_wavelength": [
 #             (250, 1), (400, 1), (450, 1)
 #         ],
-#         'channel_width_thickness_ratio': [(40, 0.5), (50, 0.5), (60, 0.5)],
-#         'channel_width_undulation': (1, 0.02),
-#         'channel_width_undulation_wavelength': (250, 1),
-#         'channel_prop': (0.4, 0.005),
+#         "channel_width_thickness_ratio": [(40, 0.5), (50, 0.5), (60, 0.5)],
+#         "channel_width_undulation": (1, 0.02),
+#         "channel_width_undulation_wavelength": (250, 1),
+#         "channel_prop": (0.4, 0.005),
 #     }
 #
 #
@@ -334,13 +336,13 @@ fig.show()
 #     # Pre-allocate containers to store all realizations and their
 #     # corresponding parameters
 #     all_params = {}
-#     facies = np.zeros((nsets * nreal, nz, nx, ny), dtype='i4')
+#     facies = np.zeros((nsets * nreal, nz, nx, ny), dtype="i4")
 #
 #     for i in range(nsets):  # We create two sets
 #         print(f"Generating realization {i+1} of {nsets}")
 #
 #         params = generate_geol_params(geol_distributions)
-#         all_params[f'set-{i}'] = params
+#         all_params[f"set-{i}"] = params
 #
 #         fluvsim = FLUVSIM(
 #             shape=(nx, ny, nz),
@@ -350,17 +352,17 @@ fig.show()
 #             **params
 #         )
 #
-#         realizations = fluvsim.run().data_vars['facies code'].values
-#         facies[i*nreal:(i+1)*nreal, ...] = realizations.astype('i4')
+#         realizations = fluvsim.run().data_vars["facies code"].values
+#         facies[i*nreal:(i+1)*nreal, ...] = realizations.astype("i4")
 #
 #
 #     # ==== Save the output ====
 #
 #     # Save the input parameters to FLUVSIM as a json.
-#     with open('facies.json', "w") as f:
+#     with open("facies.json", "w") as f:
 #         json.dump(all_params, f, indent=2)
 #     # Save the facies values as a compressed npy-file.
-#     np.save('facies', facies.squeeze(), allow_pickle=False)
+#     np.save("facies", facies.squeeze(), allow_pickle=False)
 
 
 ###############################################################################
@@ -370,14 +372,14 @@ fig.show()
 # These are, just as the data themselves, online at
 # https://github.com/tuda-geo/data/resmda.
 
-fname = 'facies.json'
+fname = "facies.json"
 pooch.retrieve(
-    'https://raw.github.com/tuda-geo/data/2024-06-18/resmda/'+fname,
-    'db2cb8a620775c68374c24a4fa811f6350381c7fc98a823b9571136d307540b4',
+    "https://raw.github.com/tuda-geo/data/2024-06-18/resmda/"+fname,
+    "db2cb8a620775c68374c24a4fa811f6350381c7fc98a823b9571136d307540b4",
     fname=fname,
     path=data_path,
 )
-with open(data_path + fname, 'r') as f:
+with open(data_path + fname, "r") as f:
     print(json.dumps(json.load(f), indent=2))
 
 ###############################################################################
