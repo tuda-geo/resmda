@@ -21,7 +21,7 @@ rng = np.random.default_rng(1848)
 # ----------------
 
 # Grid extension
-nx = 25
+nx = 30
 ny = 25
 nc = nx*ny
 
@@ -32,7 +32,6 @@ perm_max = 5.0
 
 # ESMDA parameters
 ne = 100                  # Number of ensembles
-#  dt = np.logspace(-5, -3, 10)
 dt = np.zeros(10)+0.0001  # Time steps (could be irregular, e.g., increasing!)
 time = np.r_[0, np.cumsum(dt)]
 nt = time.size
@@ -61,25 +60,23 @@ perm_true = RP(1, random=rng)
 perm_prior = RP(ne, random=rng)
 
 
-# TODO: change scale in imshow to represent meters
-
 # QC covariance, reference model, and first two random models
-fig, axs = plt.subplots(2, 2, constrained_layout=True)
-axs[0, 0].set_title('Model')
-im = axs[0, 0].imshow(perm_true.T, vmin=perm_min, vmax=perm_max)
-axs[0, 1].set_title('Lower Covariance Matrix')
-im2 = axs[0, 1].imshow(RP.cov, cmap='plasma')
-axs[1, 0].set_title('Random Model 1')
-axs[1, 0].imshow(perm_prior[0, ...].T, vmin=perm_min, vmax=perm_max)
-axs[1, 1].set_title('Random Model 2')
-axs[1, 1].imshow(perm_prior[1, ...].T, vmin=perm_min, vmax=perm_max)
-fig.colorbar(im, ax=axs[1, :], orientation='horizontal',
-             label='Log of Permeability (mD)')
-for ax in axs[1, :]:
-    ax.set_xlabel('x-direction')
-for ax in axs[:, 0]:
-    ax.set_ylabel('y-direction')
-fig.show()
+pinp1 = {"origin": "lower", "vmin": perm_min, "vmax": perm_max}
+fig, axs = plt.subplots(2, 2, figsize=(6, 6), constrained_layout=True)
+axs[0, 0].set_title("Model")
+im = axs[0, 0].imshow(perm_true.T, **pinp1)
+axs[0, 1].set_title("Lower Covariance Matrix")
+im2 = axs[0, 1].imshow(RP.cov, cmap="plasma")
+axs[1, 0].set_title("Random Model 1")
+axs[1, 0].imshow(perm_prior[0, ...].T, **pinp1)
+axs[1, 1].set_title("Random Model 2")
+axs[1, 1].imshow(perm_prior[1, ...].T, **pinp1)
+fig.colorbar(im, ax=axs[1, :], orientation="horizontal",
+             label="Log of Permeability (mD)")
+for ax in axs[1, :].ravel():
+    ax.set_xlabel("x-direction")
+for ax in axs[:, 0].ravel():
+    ax.set_ylabel("y-direction")
 
 
 ###############################################################################
@@ -101,15 +98,14 @@ data_true = sim(perm_true)
 data_obs = rng.normal(data_true, dstd)
 
 # QC data and priors
-fig, ax = plt.subplots(1, 1)
-ax.set_title('Observed and prior data')
-ax.plot(time, data_prior.T, color='.6', alpha=0.5)
-ax.plot(time, data_true, 'ko', label='True data')
-ax.plot(time, data_obs, 'C3o', label='Obs. data')
+fig, ax = plt.subplots(1, 1, constrained_layout=True)
+ax.set_title("Observed and prior data")
+ax.plot(time*24*60*60, data_prior.T, color=".6", alpha=0.5)
+ax.plot(time*24*60*60, data_true, "ko", label="True data")
+ax.plot(time*24*60*60, data_obs, "C3o", label="Obs. data")
 ax.legend()
-ax.set_xlabel('Time (???)')
-ax.set_ylabel('Pressure (???)')
-fig.show()
+ax.set_xlabel("Time (s)")
+ax.set_ylabel("Pressure (bar)")
 
 
 ###############################################################################
@@ -143,14 +139,14 @@ perm_post, data_post = resmda.esmda(
 # and posterior ensembles to see how the models have been updated.
 
 # Plot posterior
-fig, ax = plt.subplots(1, 3, figsize=(12, 5))
-ax[0].set_title('Prior Mean')
-ax[0].imshow(perm_prior.mean(axis=0).T)
-ax[1].set_title('Post Mean')
-ax[1].imshow(perm_post.mean(axis=0).T)
-ax[2].set_title('"Truth"')
-ax[2].imshow(perm_true.T)
-fig.show()
+fig, ax = plt.subplots(1, 2, figsize=(8, 5), constrained_layout=True)
+pinp2 = {"origin": "lower", "vmin": 2.5, "vmax": 3.5}
+ax[0].set_title("Prior Mean")
+im = ax[0].imshow(perm_prior.mean(axis=0).T, **pinp2)
+ax[1].set_title("Post Mean")
+ax[1].imshow(perm_post.mean(axis=0).T, **pinp2)
+fig.colorbar(im, ax=ax, label="Log of Permeability (mD)",
+             orientation="horizontal")
 
 
 ###############################################################################
@@ -162,15 +158,14 @@ fig.show()
 
 
 # Compare posterior to prior and observed data
-fig, ax = plt.subplots(1, 1)
-ax.set_title('Prior and posterior data')
-ax.plot(time, data_prior.T, color='.6', alpha=0.5)
-ax.plot(time, data_post.T, color='C0', alpha=0.5)
-ax.plot(time, data_true, 'ko')
-ax.plot(time, data_obs, 'C3o')
-ax.set_xlabel('Time (???)')
-ax.set_ylabel('Pressure (???)')
-fig.show()
+fig, ax = plt.subplots(1, 1, constrained_layout=True)
+ax.set_title("Prior and posterior data")
+ax.plot(time*24*60*60, data_prior.T, color=".6", alpha=0.5)
+ax.plot(time*24*60*60, data_post.T, color="C0", alpha=0.5)
+ax.plot(time*24*60*60, data_true, "ko")
+ax.plot(time*24*60*60, data_obs, "C3o")
+ax.set_xlabel("Time (s)")
+ax.set_ylabel("Pressure (bar)")
 
 
 ###############################################################################

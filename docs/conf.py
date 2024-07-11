@@ -1,7 +1,6 @@
 import time
 import warnings
 from resmda import __version__
-from sphinx_gallery.sorting import FileNameSortKey
 
 # ==== 1. Extensions  ====
 
@@ -39,17 +38,17 @@ todo_include_todos = True
 sphinx_gallery_conf = {
     'examples_dirs': ['../examples', ],
     'gallery_dirs': ['gallery', ],
-    'capture_repr': ('_repr_html_', '__repr__'),
+    'capture_repr': ('_repr_html_', ),
     # Patter to search for example files
     "filename_pattern": r"\.py",
     # Sort gallery example by file name instead of number of lines (default)
-    "within_subsection_order": FileNameSortKey,
+    "within_subsection_order": "FileNameSortKey",
     # Remove the settings (e.g., sphinx_gallery_thumbnail_number)
     'remove_config_comments': True,
     # Show memory
     'show_memory': True,
     # Custom first notebook cell
-    'first_notebook_cell': '%matplotlib notebook',
+    'first_notebook_cell': '%matplotlib widget',
 }
 
 # https://github.com/sphinx-gallery/sphinx-gallery/pull/521/files

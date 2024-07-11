@@ -19,8 +19,8 @@ Geir gives the ES-MDA equations as
 .. math::
     x_{j,i+1} &= x_{j,i} + (C^e_{xy})_i \left((C^e_{yy})_i +
                  \alpha_iC^e_{dd}\right)^{-1} \left(d + \sqrt{\alpha_i}
-                 \varepsilon_j - g(x_{j,i})\right) \\
-    y_{j,i+1} &= g(x_{j,i+1})
+                 \varepsilon_j - g(x_{j,i})\right) \ , \\
+    y_{j,i+1} &= g(x_{j,i+1}) \ .
 
 The model used for this example is
 
@@ -53,7 +53,7 @@ fig.suptitle("Forward Model:  y = x (1 + β x²)")
 px = np.linspace(-5, 5, 301)
 for i, b in enumerate([0.0, 0.2]):
     axs[i].set_title(
-            f"{['Linear model', 'Nonlinear model'][i]}: $\\beta$ = {b}")
+            f"{['Linear model', 'Nonlinear model'][i]}: β = {b}")
     axs[i].plot(px, forward(px, b))
     axs[i].set_xlabel('x')
     axs[i].set_ylabel('y')
@@ -109,7 +109,6 @@ def plot_result(mpost, dpost, dobs, title, ylim):
     ax2.set_xlabel('y')
     ax2.set_xlim([-5, 8])
     ax2.legend()
-    fig.show()
 
 
 ###############################################################################
