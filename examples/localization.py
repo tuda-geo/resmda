@@ -39,7 +39,7 @@ time = np.r_[0, np.cumsum(dt)]
 # Assumed sandard deviation of our data
 dstd = 0.5
 
-# Observation location indices (should be well locations)
+# Measurement points
 ox = (5, 15, 24)
 oy = (5, 10, 24)
 
@@ -48,9 +48,9 @@ nd = time.size * len(ox)
 
 # Wells
 wells = np.array([
-    [5, 5, 180], [5, 12, 120],
-    [15, 10, 180], [20, 5, 120],
-    [24, 24, 180], [24, 17, 120]
+    [ox[0], oy[0], 180], [5, 12, 120],
+    [ox[1], oy[1], 180], [20, 5, 120],
+    [ox[2], oy[2], 180], [24, 17, 120]
 ])
 
 
@@ -99,14 +99,14 @@ nd_positions = np.tile(np.array([ox, oy]), time.size).T
 loc_mat = resmda.build_localization_matrix(RP.cov, nd_positions, (nx, ny))
 
 # QC localization matrix
-fig, ax = plt.subplots(1, 1, sharex=True, sharey=True, constrained_layout=True)
-ax.imshow(loc_mat.sum(axis=2).T, origin='lower')
-ax.contour(loc_mat.sum(axis=2).T, levels=[2.0, ], colors='w')
+fig, ax = plt.subplots(1, 1, constrained_layout=True)
+im = ax.imshow(loc_mat.sum(axis=2).T/time.size, origin='lower', cmap="plasma")
+ax.contour(loc_mat.sum(axis=2).T/time.size, levels=[0.2, ], colors='w')
 ax.set_xlabel('x-direction')
 ax.set_ylabel('y-direction')
 for well in wells:
     ax.plot(well[0], well[1], ['C3v', 'C1^'][int(well[2] == 120)])
-fig.show()
+fig.colorbar(im, ax=ax, label="Localization Weight (-)")
 
 
 ###############################################################################
@@ -151,29 +151,30 @@ wl_perm_post, wl_data_post = resmda.esmda(**inp, localization_matrix=loc_mat)
 
 # Plot posterior
 fig, axs = plt.subplots(
-    2, 2, figsize=(6, 6), sharex=True, sharey=True, constrained_layout=True)
-axs[0, 0].set_title('Prior Mean')
-im = axs[0, 0].imshow(perm_prior.mean(axis=0).T, origin='lower')
-axs[0, 1].set_title('"Truth"')
-axs[0, 1].imshow(perm_true.T, origin='lower')
+    1, 3, figsize=(8, 4), sharex=True, sharey=True, constrained_layout=True)
+
+par = {"vmin": perm_min, "vmax": perm_max, "origin": "lower"}
+
+axs[0].set_title("Prior Mean")
+im = axs[0].imshow(perm_prior.mean(axis=0).T, **par)
 
 
-axs[1, 0].set_title('Post Mean without localization')
-axs[1, 0].imshow(nl_perm_post.mean(axis=0).T, origin='lower')
-axs[1, 1].set_title('Post Mean with localization')
-axs[1, 1].imshow(wl_perm_post.mean(axis=0).T, origin='lower')
-axs[1, 1].contour(loc_mat.sum(axis=2).T, levels=[2.0, ], colors='w')
-fig.colorbar(im, ax=axs, orientation='horizontal',
-             label='Log of Permeability (mD)')
+axs[1].set_title("Post Mean; No localization")
+axs[1].imshow(nl_perm_post.mean(axis=0).T, **par)
 
-for ax in axs.ravel():
+axs[2].set_title("Post Mean: Localization")
+axs[2].imshow(wl_perm_post.mean(axis=0).T, **par)
+axs[2].contour(loc_mat.sum(axis=2).T, levels=[2.0, ], colors="w")
+
+fig.colorbar(im, ax=axs, label="Log Permeabilities (mD)",
+             orientation="horizontal")
+
+for ax in axs:
     for well in wells:
-        ax.plot(well[0], well[1], ['C3v', 'C1^'][int(well[2] == 120)])
-for ax in axs[1, :].ravel():
+        ax.plot(well[0], well[1], ["C3v", "C1^"][int(well[2] == 120)])
+for ax in axs:
     ax.set_xlabel('x-direction')
-for ax in axs[:, 0].ravel():
-    ax.set_ylabel('y-direction')
-fig.show()
+axs[0].set_ylabel('y-direction')
 
 
 ###############################################################################
@@ -185,17 +186,20 @@ fig, axs = plt.subplots(
     2, 3, figsize=(8, 5), sharex=True, sharey=True, constrained_layout=True)
 fig.suptitle('Prior and posterior data')
 for i, ax in enumerate(axs[0, :]):
-    ax.plot(time, data_prior[..., i::3].T, color='.6', alpha=0.5)
-    ax.plot(time, nl_data_post[..., i::3].T, color='C0', alpha=0.5)
-    ax.plot(time, data_obs[0, i::3], 'C3o')
-    ax.set_ylabel('Pressure')
+    ax.set_title(f"Well ({ox[i]}; {oy[i]})")
+    ax.plot(time*24*60*60, data_prior[..., i::3].T, color='.6', alpha=0.5)
+    ax.plot(time*24*60*60, nl_data_post[..., i::3].T, color='C0', alpha=0.5)
+    ax.plot(time*24*60*60, data_obs[0, i::3], 'C3o')
 for i, ax in enumerate(axs[1, :]):
-    ax.plot(time, data_prior[..., i::3].T, color='.6', alpha=0.5)
-    ax.plot(time, wl_data_post[..., i::3].T, color='C0', alpha=0.5)
-    ax.plot(time, data_obs[0, i::3], 'C3o')
-    ax.set_xlabel('Time')
-    ax.set_ylabel('Pressure')
-fig.show()
+    ax.plot(time*24*60*60, data_prior[..., i::3].T, color='.6', alpha=0.5)
+    ax.plot(time*24*60*60, wl_data_post[..., i::3].T, color='C0', alpha=0.5)
+    ax.plot(time*24*60*60, data_obs[0, i::3], 'C3o')
+    ax.set_xlabel("Time (s)")
+for i, ax in enumerate(axs[:, 0]):
+    ax.set_ylabel("Pressure (bar)")
+for i, txt in enumerate(["No l", "L"]):
+    axs[i, 2].yaxis.set_label_position("right")
+    axs[i, 2].set_ylabel(f"{txt}ocalization")
 
 
 ###############################################################################

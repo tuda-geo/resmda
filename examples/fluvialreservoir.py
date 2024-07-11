@@ -99,7 +99,7 @@ axs = axs.ravel()
 fig.suptitle("Permeabilities")
 for i in range(ne):
     im = axs[i].imshow(permeabilities[i, ...], origin="lower")
-fig.colorbar(im, ax=axs, label="Log10 Permeability (mD)")
+fig.colorbar(im, ax=axs, label="Log Permeability (mD)")
 
 
 ###############################################################################
@@ -221,12 +221,15 @@ axs[2].set_title("Post Mean: Localization")
 axs[2].imshow(wl_perm_post.mean(axis=0).T, **par)
 axs[2].contour(loc_mat.sum(axis=2).T, levels=[2.0, ], colors="w")
 
-fig.colorbar(im, ax=axs, label="Log10 Permeabilities (mD)",
+fig.colorbar(im, ax=axs, label="Log Permeabilities (mD)",
              orientation="horizontal")
 
 for ax in axs:
     for well in wells:
         ax.plot(well[0], well[1], ["C3v", "C1^"][int(well[2] == 120)])
+for ax in axs:
+    ax.set_xlabel('x-direction')
+axs[0].set_ylabel('y-direction')
 
 
 ###############################################################################
