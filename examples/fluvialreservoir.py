@@ -38,7 +38,7 @@ import resmda
 
 # For reproducibility, we instantiate a random number generator with a fixed
 # seed. For production, remove the seed!
-rng = np.random.default_rng(1324)
+rng = np.random.default_rng(1513)
 
 # Adjust this path to a folder of your choice.
 data_path = os.path.join("..", "download", "")
@@ -73,7 +73,6 @@ for i in range(ne):
         clim=[-0.5, 2.5], origin="lower"
     )
 fig.colorbar(im, ax=axs, ticks=[0, 1, 2], label="Facies code")
-fig.show()
 
 
 ###############################################################################
@@ -100,8 +99,7 @@ axs = axs.ravel()
 fig.suptitle("Permeabilities")
 for i in range(ne):
     im = axs[i].imshow(permeabilities[i, ...], origin="lower")
-fig.colorbar(im, ax=axs)
-fig.show()
+fig.colorbar(im, ax=axs, label="Log10 Permeability (mD)")
 
 
 ###############################################################################
@@ -208,20 +206,25 @@ wl_perm_post, wl_data_post = resmda.esmda(**inp, localization_matrix=loc_mat)
 
 # Plot posterior
 fig, axs = plt.subplots(
-    2, 2, figsize=(6, 6), sharex=True, sharey=True, constrained_layout=True)
-axs[0, 0].set_title("Prior Mean")
-axs[0, 0].imshow(perm_prior.mean(axis=0).T, vmin=perm_min, vmax=perm_max)
-axs[0, 1].set_title("'Truth'")
-axs[0, 1].imshow(perm_true.T, vmin=perm_min, vmax=perm_max)
+    1, 3, figsize=(8, 4), sharex=True, sharey=True, constrained_layout=True)
+
+par = {"vmin": perm_min, "vmax": perm_max, "origin": "lower"}
+
+axs[0].set_title("Prior Mean")
+im = axs[0].imshow(perm_prior.mean(axis=0).T, **par)
 
 
-axs[1, 0].set_title("Post Mean without localization")
-axs[1, 0].imshow(nl_perm_post.mean(axis=0).T, vmin=perm_min, vmax=perm_max)
-axs[1, 1].set_title("Post Mean with localization")
-axs[1, 1].imshow(wl_perm_post.mean(axis=0).T, vmin=perm_min, vmax=perm_max)
-axs[1, 1].contour(loc_mat.sum(axis=2).T, levels=[2.0, ], colors="w")
+axs[1].set_title("Post Mean; No localization")
+axs[1].imshow(nl_perm_post.mean(axis=0).T, **par)
 
-for ax in axs.ravel():
+axs[2].set_title("Post Mean: Localization")
+axs[2].imshow(wl_perm_post.mean(axis=0).T, **par)
+axs[2].contour(loc_mat.sum(axis=2).T, levels=[2.0, ], colors="w")
+
+fig.colorbar(im, ax=axs, label="Log10 Permeabilities (mD)",
+             orientation="horizontal")
+
+for ax in axs:
     for well in wells:
         ax.plot(well[0], well[1], ["C3v", "C1^"][int(well[2] == 120)])
 
@@ -235,6 +238,7 @@ fig, axs = plt.subplots(
     2, 3, figsize=(8, 5), sharex=True, sharey=True, constrained_layout=True)
 fig.suptitle("Prior and posterior data")
 for i, ax in enumerate(axs[0, :]):
+    ax.set_title(f"Well ({ox[i]}; {oy[i]})")
     ax.plot(time*24*60*60, data_prior[..., i::3].T, color=".6", alpha=0.5)
     ax.plot(time*24*60*60, nl_data_post[..., i::3].T, color="C0", alpha=0.5)
     ax.plot(time*24*60*60, data_obs[0, i::3], "C3o")
