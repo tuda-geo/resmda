@@ -44,7 +44,7 @@ def rng(random=None):
         - If ``None`` it returns a :func:`numpy.random.default_rng()` instance
           instantiated on a module level.
         - If ``int``, it returns a newly created
-          :func:`numpy.random.default_rng()`` instance, instantiated with
+          :func:`numpy.random.default_rng()` instance, instantiated with
           ``int`` as seed.
         - If it is already a :class:`numpy.random.Generator` instance, it
           simply returns it.
@@ -67,7 +67,10 @@ def rng(random=None):
 
 
 class Report(ScoobyReport):
-    """Print a Scooby report; see ``scooby.Report()`` for info."""
+    """Print a Scooby report.
+
+    For more info, consult https://github.com/banesullivan/scooby/.
+    """
 
     def __init__(self, **kwargs):
         """Initiate a scooby.Report instance."""

@@ -10,5 +10,6 @@ presented by Emerick and Reynolds, 2013.
 - **Bug reports:** https://github.com/tuda-geo/resmda/issues
 
 
-Available through pip: ``pip install resmda``.
+Available through pip and conda:
+``pip install resmda`` / ``conda install -c conda-forge resmda``.
 

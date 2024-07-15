@@ -16,6 +16,7 @@ sphinx_gallery>=0.16
 pydata_sphinx_theme
 sphinx_automodapi
 ipykernel
+ipympl
 pooch
 
 # FOR TESTING
