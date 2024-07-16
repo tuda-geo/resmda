@@ -96,7 +96,7 @@ data_obs[0, :3] = data_true[0, :3]
 nd_positions = np.tile(np.array([ox, oy]), time.size).T
 
 # Create matrix
-loc_mat = resmda.build_localization_matrix(RP.cov, nd_positions, (nx, ny))
+loc_mat = resmda.localization_matrix(RP.cov, nd_positions, (nx, ny))
 
 # QC localization matrix
 fig, ax = plt.subplots(1, 1, constrained_layout=True)

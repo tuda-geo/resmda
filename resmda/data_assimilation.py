@@ -16,9 +16,9 @@
 
 import numpy as np
 
-from resmda.utils import rng
+from resmda import utils
 
-__all__ = ['esmda', 'build_localization_matrix']
+__all__ = ['esmda']
 
 
 def __dir__():
@@ -107,7 +107,7 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
         # For each ensemble member, perturb the observation vector using
         # d_uc = d_obs + sqrt(α_i) * C_D^0.5 z_d; z_d ~ N(0, I_N_d)
 
-        zd = rng(random).normal(size=(ne, nd))
+        zd = utils.rng(random).normal(size=(ne, nd))
         data_pert = data_obs + np.sqrt(alpha) * sigma * zd
 
         # == Step (c) of Emerick & Reynolds, 2013 ==
@@ -167,37 +167,3 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
         return model_post, data_post
     else:
         return model_post
-
-
-def build_localization_matrix(cov_matrix, data_positions, shape):
-    """Return a localization matrix
-
-    Build a localization matrix from a full covariance matrix based on specific
-    data positions.
-
-    Parameters
-    ----------
-    cov_matrix : ndarray
-        The lower triangular covariance matrix ``(nx*ny, nx*ny)``.
-    data_positions : ndarray
-        Positions in the grid for each data point (e.g., wells), zero-indexed,
-        of size ``(nd, 2)``.
-    shape : tuple
-        Dimensions of the grid ``(nx, ny)``.
-
-    Returns
-    -------
-    loc_matrix : ndarray
-        Localization matrix of shape ``(nx, ny, nd)``.
-
-    """
-    # Convert 2D positions of data points to 1D indices suitable for accessing
-    # the covariance matrix
-    indices = data_positions[:, 1] * shape[0] + data_positions[:, 0]
-
-    # Create full matrix from lower triangular matrix
-    full_cov = cov_matrix + np.tril(cov_matrix, -1).T
-
-    # Extract the columns from the covariance matrix corresponding to each data
-    # point's position, and reshape.
-    return full_cov[:, indices.astype(int)].reshape((*shape, -1), order='F')

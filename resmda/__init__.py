@@ -15,8 +15,8 @@
 # the License.
 
 from resmda import utils
-from resmda.utils import Report
-from resmda.data_assimilation import esmda, build_localization_matrix
+from resmda.utils import localization_matrix, Report
+from resmda.data_assimilation import esmda
 from resmda.reservoir_simulator import Simulator, RandomPermeability
 
 
@@ -25,8 +25,7 @@ rng = utils.rng()
 
 
 __all__ = ['reservoir_simulator', 'data_assimilation', 'utils',
-           'Simulator', 'RandomPermeability',
-           'esmda', 'build_localization_matrix',
-           'rng', 'Report']
+           'esmda', 'Simulator', 'RandomPermeability',
+           'localization_matrix', 'rng', 'Report']
 
 __version__ = utils.__version__

@@ -17,9 +17,9 @@
 import numpy as np
 import scipy as sp
 
-from resmda.utils import rng
+from resmda import utils
 
-__all__ = ['Simulator', 'RandomPermeability', 'covariance']
+__all__ = ['Simulator', 'RandomPermeability']
 
 
 def __dir__():
@@ -29,46 +29,49 @@ def __dir__():
 class Simulator:
     """A small 2D Reservoir Simulator.
 
+    2D connection-based, single phase, single component system using the Darcy
+    assumption, backward Euler for time discretization, and finite volume for
+    space discretization.
+
     Created by following the course
     **AESM304A - Flow and Simulation of Subsurface processes** at
     Delft University of Technology (TUD); this particular part was taught by
     Dr. D.V. Voskov, https://orcid.org/0000-0002-5399-1755.
 
+
+    Parameters
+    ----------
+    nx, ny : int
+        Dimension of field (number of cells).
+    phi : float, default: 0.2
+        Porosity (-).
+    c_f : float, default: 1e-5
+        Formation compressibility (1/kPa).
+    p0 : float, default: 1.0
+        Zero pressure (bar).
+    rho0 : float, default: 1.0
+        Fixed density (kg/m3).
+    mu_w : float, default: 1.0
+        Viscosity (cP).
+    rw : float, default: 0.15
+        Well radius (m).
+    pres_ini : float, default: 150.0
+        Initial well pressure (bar).
+    wells : {ndarray, None}, default: None
+        Nd array of shape ``(nwells, 3)``, indicating well locations (with cell
+        indices) and pressure. If None, the default is used, which is
+            np.array([[0, 0, 180], [self.nx-1, self.ny-1, 120]])
+        corresponding to a well in the first and in the last cell, with a
+        pressure of 180 and 120, respectively.
+    dx, dz : floats, default: 50.0, 10.0
+        Cell dimensions in horizontal (dx) and vertical (dz)
+        directions (m).
+
     """
 
     def __init__(self, nx, ny, phi=0.2, c_f=1e-5, p0=1.0, rho0=1.0, mu_w=1.0,
                  rw=0.15, pres_ini=150.0, wells=None, dx=50.0, dz=10.0):
-        """Initialize a Simulation instance.
-
-        Parameters
-        ----------
-        nx, ny : int
-            Dimension of field (number of cells).
-        phi : float, default: 0.2
-            Porosity (-).
-        c_f : float, default: 1e-5
-            Formation compressibility (1/kPa).
-        p0 : float, default: 1.0
-            Initial pressure (bar or kPa?).
-        rho0 : float, default: 1.0
-            Fixed density (kg/m3).
-        mu_w : float, default: 1.0
-            Viscosity (cP - Pa s).
-        rw : float, default: 0.15
-            Well radius (m).
-        pres_ini : float, default: 150.0
-            Initial pressure [?].
-        wells : {ndarray, None}, default: None
-            Nd array of shape (nwells, 3), indicating well locations (with cell
-            indices) and pressure. If None, the default is used, which is
-                np.array([[0, 0, 180], [self.nx-1, self.ny-1, 120]])
-            corresponding to a well in the first and in the last cell, with a
-            pressure of 180 and 120, respectively.
-        dx, dz : floats, default: 50.0, 10.0
-            Cell dimensions in horizontal (dx) and vertical (dz)
-            directions (m).
-
-        """
+        """Initialize a Simulation instance."""
 
         self.size = nx*ny
         self.shape = (nx, ny)
@@ -92,9 +95,9 @@ class Simulator:
         if wells is None:
             # Default wells setup if none provided. Each well is specified by
             # its grid coordinates followed by its pressure. The first well
-            # ([0, 0, 180]) is placed at the top-left corner with a pressure of
-            # 180 units, representing an injection pressure. The second well
-            # ([self.nx-1, self.ny-1, 120]), is located at the bottom-right
+            # ([0, 0, 180]) is placed at the bottom-left corner with a pressure
+            # of 180 units, representing an injection pressure. The second well
+            # ([self.nx-1, self.ny-1, 120]), is located at the top-right
             # corner, and has a pressure of 120 units, possibly a lower
             # pressure or production scenario.
             self.wells = np.array([[0, 0, 180], [self.nx-1, self.ny-1, 120]])
@@ -127,7 +130,7 @@ class Simulator:
             Current pressure state of the reservoir of size ``self.size``.
 
         dt : float
-            Time step for the simulation.
+            Time step for the simulation (days).
 
         Returns
         -------
@@ -188,15 +191,15 @@ class Simulator:
         Parameters
         ----------
         perm_fields : ndarray
-            Permeability fields to simulate, either of dimension
+            Permeability fields (mD) to simulate, either of dimension
             (ne, nx, ny), or of dimension (nx, ny).
 
         dt : ndarray, default: np.ones(10)*0.0001
-            Time steps to use for simulation.
+            Time steps to use for simulation (days).
 
         data : {False, [ndarray, ndarray]}, default: False
-            Specific indices [nx, ny] to output data for; if False, return all
-            data
+            Specific indices [nx, ny] to output data for;
+            if False, return all data
 
         Returns
         -------
@@ -232,38 +235,39 @@ class Simulator:
 
 
 class RandomPermeability:
-    """Return random permeability fields with certain statistical props."""
+    """Return random permeability fields with certain statistical props.
+
+
+    Parameters
+    ----------
+    nx, ny : int
+        Dimensions of the grid.
+    perm_mean : float
+        Mean permeability (mD).
+    perm_min, perm_max : float
+        Minimum and maximum values for permeability (mD).
+    length : tuple of two floats, default: (10.0, 10.0)
+        Length scales for the correlation of permeability (-).
+    theta : float, default: 45.0
+        Rotation angle for the anisotropy in the permeability field (°).
+    variance : float, default: 1.0
+        Variance scale for the permeability.
+    dtype : str, default: 'float32'
+        Data type for computations, for precision and performance tuning.
+
+    """
 
     def __init__(self, nx, ny, perm_mean, perm_min, perm_max,
-                 length=(10.0, 10.0), theta=45.0, sigma_pr2=1.0,
+                 length=(10.0, 10.0), theta=45.0, variance=1.0,
                  dtype='float32'):
-        """Initialize parameters for generating random permeability fields.
-
-        Parameters
-        ----------
-        nx, ny : int
-            Dimensions of the grid.
-        perm_mean : float
-            Mean permeability.
-        perm_min, perm_max : float
-            Minimum and maximum values for permeability.
-        length : tuple of two floats, default: (10.0, 10.0)
-            Length scales for the correlation of permeability.
-        theta : float, default: 45.0
-            Rotation angle for the anisotropy in the permeability field.
-        sigma_pr2 : float, default: 1.0
-            Variance scale for the permeability.
-        dtype : str, default: 'float32'
-            Data type for computations, for precision and performance tuning.
-
-        """
-        self.nx, self.ny = nx, ny  # Grid dimensions
-        self.nc = nx * ny  # Total number of cells
-        self.perm_mean = perm_mean  # Permeability statistics
+        """Initialize parameters for generating random permeability fields."""
+        self.nx, self.ny = nx, ny                # Grid dimensions
+        self.nc = nx * ny                        # Total number of cells
+        self.perm_mean = perm_mean               # Permeability statistics
         self.perm_min, self.perm_max = perm_min, perm_max
         self.length, self.theta = length, theta  # Anisotropy parameters
-        self.sigma_pr2 = sigma_pr2  # Variance
-        self.dtype = dtype          # Data type
+        self.variance = variance                 # Variance
+        self.dtype = dtype                       # Data type
 
     @property
     def cov(self):
@@ -273,9 +277,9 @@ class RandomPermeability:
         statistical parameters.
         """
         if not hasattr(self, '_cov'):
-            self._cov = covariance(
+            self._cov = utils.gaussian_covariance(
                 nx=self.nx, ny=self.ny, length=self.length,
-                theta=self.theta, sigma_pr2=self.sigma_pr2, dtype=self.dtype
+                theta=self.theta, variance=self.variance, dtype=self.dtype
             )
         return self._cov
 
@@ -292,7 +296,7 @@ class RandomPermeability:
 
     def __call__(self, n, perm_mean=None, perm_min=None, perm_max=None,
                  random=None):
-        """Gerenate n random permeadility fields
+        """Generate n random permeability fields
 
         Generate n random permeability fields using the specified statistical
         parameters and random seed.
@@ -302,9 +306,9 @@ class RandomPermeability:
         n : int
             Number of fields to generate
         perm_mean : {float, None}, default: None
-            Mean permeability to override the initialized value.
+            Mean permeability to override the initialized value (mD).
         perm_min, perm_max : {float, None}, default: None
-            Min and max permeability values to clip the fields.
+            Min and max permeability values to clip the fields (mD).
         random : {None, int,  np.random.Generator}, default: None
             Seed or random generator for reproducibility.
 
@@ -325,82 +329,10 @@ class RandomPermeability:
         # Initialize fields with mean permeability
         out = np.full((n, self.nx, self.ny), perm_mean, order='F')
         for i in range(n):
-            z = rng(random).normal(size=self.nc)  # Generate random numbers
+            z = utils.rng(random).normal(size=self.nc)  # Random numbers
             # Apply the Cholesky transform
             out[i, ...] += (self.lcho @ z).reshape(
                     (self.nx, self.ny), order='F')
 
         # Clip the results to stay within specified bounds
         return out.clip(perm_min, perm_max)
-
-
-def covariance(nx, ny, length, theta, sigma_pr2, dtype='float32'):
-    """Return covariance matrix
-
-    Generate covariance matrix based on grid size, anisotropy, and statistical
-    parameters.
-
-
-    Parameters
-    ----------
-    nx, ny : int
-        Dimensions of the grid.
-    length : float
-        Length scales for the correlation of permeability.
-    theta : float
-        Rotation angle for the anisotropy in the permeability field.
-    sigma_pr2 : float
-        Variance scale for the permeability.
-    dtype : str, default: 'float32'
-        Data type for computations.
-
-
-    Returns
-    -------
-    cov : ndarray
-        Covariance matrix for the permeability field.
-
-    """
-    nc = nx * ny  # Total number of cells
-    # Precompute cosine and sine of the rotation angle
-    cost, sint = np.cos(theta), np.sin(theta)
-
-    # 1. Fill the first row of the covariance matrix
-    tmp1 = np.zeros([nx, nc], dtype=dtype)
-    for i in range(nx):
-        tmp1[i, 0] = 1.0  # Set diagonal
-        for j in range(i+1, nc):
-            # Distance in the x and y directions
-            d0 = (j % nx) - i
-            d1 = (j // nx)
-            # Rotate coordinates
-            rot0 = cost*d0 - sint*d1
-            rot1 = sint*d0 + cost*d1
-            # Calculate the scaled distance
-            hl = np.sqrt((rot0/length[0])**2 + (rot1/length[1])**2)
-
-            # Sphere formula for covariance, modified for anisotropy
-            if sigma_pr2:  # Non-zero variance scale
-                if hl <= 1:
-                    tmp1[i, j-i] = sigma_pr2 * (1 - 1.5*hl + hl**3/2)
-
-            else:  # Gaspari-Cohn function for smoothness
-                if hl < 1:
-                    tmp1[i, j-i] = (-(hl**5)/4 + (hl**4)/2 + (hl**3)*5/8 -
-                                    (hl**2)*5/3 + 1)
-                elif hl >= 1 and hl < 2:
-                    tmp1[i, j-i] = ((hl**5)/12 - (hl**4)/2 + (hl**3)*5/8 +
-                                    (hl**2)*5/3 - hl*5 + 4 - (1/hl)*2/3)
-
-    # 2. Get the indices of the non-zero columns
-    ind = np.where(tmp1.sum(axis=0))[0]
-
-    # 3. Expand the non-zero colums ny-times
-    tmp2 = np.zeros([nc, ind.size], dtype=dtype)
-    for i, j in enumerate(ind):
-        n = j//nx
-        tmp2[:nc-n*nx, i] = np.tile(tmp1[:, j], ny-n)
-
-    # 4. Construct array through sparse diagonal array
-    cov = sp.sparse.dia_array((tmp2.T, -ind), shape=(nc, nc))
-    return cov.toarray()
