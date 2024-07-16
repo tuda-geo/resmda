@@ -79,6 +79,9 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
     ne = model_prior.shape[0]
     nd = data_obs.size
 
+    # Get random number generator
+    rng = utils.rng(random)
+
     # Expand sigma if float
     if np.asarray(sigma).size == 1:
         sigma = np.zeros(nd) + sigma
@@ -107,7 +110,7 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
         # For each ensemble member, perturb the observation vector using
         # d_uc = d_obs + sqrt(α_i) * C_D^0.5 z_d; z_d ~ N(0, I_N_d)
 
-        zd = utils.rng(random).normal(size=(ne, nd))
+        zd = rng.normal(size=(ne, nd))
         data_pert = data_obs + np.sqrt(alpha) * sigma * zd
 
         # == Step (c) of Emerick & Reynolds, 2013 ==
