@@ -29,9 +29,20 @@ def __dir__():
 class Simulator:
     """A small 2D Reservoir Simulator.
 
-    2D connection-based, single phase, single component system using the Darcy
-    assumption, backward Euler for time discretization, and finite volume for
-    space discretization.
+    2D connection-based, single-phase, single-component system using the Darcy
+    assumption, employing backward Euler for time discretization and finite
+    volume for space discretization. It simulates a single-phase fluid (likely
+    water) with compressibility in a reservoir with constant porosity and a
+    heterogeneous permeability field. The simulator utilizes SciPy's
+    ``sparse.linalg.solve`` for pressure solutions and calculates
+    transmissibilities for inter-block connections. Well modeling is handled
+    through the Peaceman well model for well indices, with constant pressure
+    boundary conditions for injection and production wells. The simulation
+    operates on a 2D grid with user-defined dimensions (nx, ny), uses flexible
+    time steps, and starts from a specified initial pressure condition.
+    Physical processes accounted for include fluid density changes with
+    pressure (modeling a slightly compressible fluid) while assuming constant
+    fluid viscosity."
 
     Created by following the course
     **AESM304A - Flow and Simulation of Subsurface processes** at
@@ -60,7 +71,9 @@ class Simulator:
     wells : {ndarray, None}, default: None
         Nd array of shape ``(nwells, 3)``, indicating well locations (with cell
         indices) and pressure. If None, the default is used, which is
+
             np.array([[0, 0, 180], [self.nx-1, self.ny-1, 120]])
+
         corresponding to a well in the first and in the last cell, with a
         pressure of 180 and 120, respectively.
     dx, dz : floats, default: 50.0, 10.0
