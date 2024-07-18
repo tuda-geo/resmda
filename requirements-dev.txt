@@ -23,3 +23,7 @@ flake8
 pytest
 coveralls
 pytest_cov
+
+#RUN DARTS
+open-darts
+open-darts-flash 
