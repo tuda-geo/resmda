@@ -16,9 +16,9 @@
 
 import numpy as np
 
-from resmda.utils import rng
+from resmda import utils
 
-__all__ = ['esmda', 'build_localization_matrix']
+__all__ = ['esmda']
 
 
 def __dir__():
@@ -47,23 +47,24 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
         Observed data of shape ``(nd)``.
     sigma : {float, ndarray}
         Standard deviation(s) of the observation noise.
-    alphas : {int, ndarray}, default: 4
+    alphas : {int, array-like}, default: 4
         Inflation factors for ES-MDA.
     data_prior : ndarray, default: None
-        Prior data ensemble, of shape (ne, nd).
+        Prior data ensemble, of shape ``(ne, nd)``.
     callback_post : function, default: None
         Function to be executed after each ES-MDA iteration to the posterior
         model, ``callback_post(model_post)``.
     return_post_data : bool, default: True
         If true, returns also ``forward(model_post)``.
     return_steps : bool, default: False
-        If true, returns model (and data) of all ES-MDA steps.
-        Setting ``return_steps`` to True enforces ``return_post_data=True``.
+        If true, returns model and data of all ES-MDA steps. Setting
+        ``return_steps`` to True enforces ``return_post_data=True``.
     random : {None, int,  np.random.Generator}, default: None
-        Seed or random generator for reproducibility.
+        Seed or random generator for reproducibility; see
+        :func:`resmda.utils.rng`.
     localization_matrix : {ndarray, None}, default: None
         If provided, apply localization to the Kalman gain matrix, of shape
-        (model-shape, nd).
+        ``(model-shape, nd)``.
 
 
     Returns
@@ -77,6 +78,9 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
     # Get number of ensembles and time steps
     ne = model_prior.shape[0]
     nd = data_obs.size
+
+    # Get random number generator
+    rng = utils.rng(random)
 
     # Expand sigma if float
     if np.asarray(sigma).size == 1:
@@ -106,7 +110,7 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
         # For each ensemble member, perturb the observation vector using
         # d_uc = d_obs + sqrt(α_i) * C_D^0.5 z_d; z_d ~ N(0, I_N_d)
 
-        zd = rng(random).normal(size=(ne, nd))
+        zd = rng.normal(size=(ne, nd))
         data_pert = data_obs + np.sqrt(alpha) * sigma * zd
 
         # == Step (c) of Emerick & Reynolds, 2013 ==
@@ -166,37 +170,3 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
         return model_post, data_post
     else:
         return model_post
-
-
-def build_localization_matrix(cov_matrix, data_positions, shape):
-    """Build a localization matrix
-
-    Build a localization matrix from a full covariance matrix based on specific
-    data positions.
-
-    Parameters
-    ----------
-    cov_matrix : ndarray
-        The lower triangular covariance matrix (nx*ny, nx*ny).
-    data_positions : ndarray
-        Positions in the grid for each data point (e.g., wells), zero-indexed,
-        of size (nd, 2).
-    shape : tuple
-        Dimensions of the grid (nx, ny).
-
-    Returns
-    -------
-    loc_matrix : ndarray
-        Localization matrix of shape (nx, ny, nd).
-
-    """
-    # Convert 2D positions of data points to 1D indices suitable for accessing
-    # the covariance matrix
-    indices = data_positions[:, 1] * shape[0] + data_positions[:, 0]
-
-    # Create full matrix from lower triangular matrix
-    cov_matrix = cov_matrix + np.tril(cov_matrix, -1).T
-
-    # Extract the columns from the covariance matrix corresponding to each data
-    # point's position, and reshape.
-    return cov_matrix[:, indices.astype(int)].reshape((*shape, -1), order='F')

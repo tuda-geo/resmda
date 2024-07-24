@@ -7,6 +7,12 @@ You can install the latest release of resmda simply via ``pip``
 
    pip install resmda
 
+and ``conda``
+
+.. code-block:: console
+
+   conda install -c conda-forge resmda
+
 or clone the repository and install it manually with
 
 .. code-block:: console

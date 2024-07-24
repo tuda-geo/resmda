@@ -68,7 +68,7 @@ resmda Documentation
         ^^^^^^^^^^^^^
 
         The API reference of resmda includes almost every function and class.
-        Some of the underlying theory is also described in the docstring.
+        Some of the underlying theory is also described in the docstrings.
 
         +++
 

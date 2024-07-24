@@ -3,8 +3,8 @@
 License
 =======
 
-Everything of resmda is open-source: Code is released under the Apache 2.0
-license, text (e.g., the manual) is released under the CC-BY 4.0 license.
+Everything of resmda is open-source: The code is released under the Apache 2.0
+license, the text (e.g., the manual) is released under the CC-BY 4.0 license.
 
 
 License of Text and Website

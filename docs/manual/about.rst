@@ -10,15 +10,15 @@ ES-MDA
 ------
 
 
-In the following an introduction to the ES-MDA (Ensemble Smoother with Multiple
-Data Assimilation) algorithm following [EmRe13]_:
+In the following an introduction to the Ensemble Smoother with Multiple Data
+Assimilation (ES-MDA) algorithm following [EmRe13]_:
 
 In history-matching problems, it is common to consider solely the
 parameter-estimation problem and thereby neglecting model uncertainties. Thus,
-unlike EnKF, the parameters and states are always consistent (Thulin et al.,
-2007). This fact helps to explain the better data matches obtained by ES-MDA
-compared to EnKF. The analyzed vector of model parameters :math:`m^a` is given
-in that case by
+unlike with the ensemble Kalman filter (EnKF), the parameters and states are
+always consistent (Thulin et al., 2007). This fact helps to explain the better
+data matches obtained by ES-MDA compared to EnKF. The analyzed vector of model
+parameters :math:`m^a` is given in that case by
 
 .. math::
     m_j^a = m_j^f + C_\text{MD}^f \left(C_\text{DD}^f + \alpha C_\text{D}
