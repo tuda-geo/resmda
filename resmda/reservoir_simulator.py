@@ -188,8 +188,12 @@ class Simulator:
         d[self.locs] += self._add_wells_d
 
         # Bring to sparse matrix
-        offsets = np.array([-self.nx, -1, 0, 1, self.nx])
-        data = np.array([mn, m1, d, p1, pn])
+        if self.nx > 1:
+            offsets = np.array([-self.nx, -1, 0, 1, self.nx])
+            data = np.array([mn, m1, d, p1, pn])
+        else:
+            offsets = np.array([-1, 0, 1])
+            data = np.array([mn+m1, d, p1+pn])
         K = sp.sparse.dia_array((data, offsets), shape=(self.size, self.size))
 
         # Solve the system
