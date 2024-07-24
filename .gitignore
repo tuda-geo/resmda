@@ -3,15 +3,11 @@ __pycache__/
 *.nc
 *.pdf
 *.zip
-
 *.nc
 *.h5
 *.pkl
 *.png
 *.jpg
-
-
-
 
 # Sphinx
 docs/_build/
