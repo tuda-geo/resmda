@@ -1,0 +1,6 @@
+localization_matrix
+===================
+
+.. currentmodule:: resmda.utils
+
+.. autofunction:: localization_matrix
