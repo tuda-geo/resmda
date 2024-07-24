@@ -3,6 +3,8 @@
 
 # SOFT DEPENDENCIES
 matplotlib
+open-darts
+open-darts-flash
 
 # SETUP RELATED
 setuptools_scm
@@ -24,7 +26,3 @@ flake8
 pytest
 coveralls
 pytest_cov
-
-#RUN DARTS
-open-darts
-open-darts-flash 
