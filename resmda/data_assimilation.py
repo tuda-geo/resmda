@@ -1,4 +1,4 @@
-# Copyright 2024 Dieter Werthmüller, Gabriel Serrao Seabra
+# Copyright 2024 D. Werthmüller, G. Serrao Seabra, F.C. Vossepoel
 #
 # This file is part of resmda.
 #
