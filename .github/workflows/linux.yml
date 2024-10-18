@@ -59,11 +59,11 @@ jobs:
         shell: bash -l {0}
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements-dev.txt
+          python -m pip install .[all]
 
       - name: Flake8
         shell: bash -l {0}
-        run: flake8 docs/conf.py setup.py resmda/ tests/
+        run: flake8 docs/conf.py resmda/ tests/
 
       - name: Test with pytest
         shell: bash -l {0}
@@ -112,7 +112,7 @@ jobs:
           # Change setuptools-scm local_scheme to "no-local-version" so the
           # local part of the version isn't included, making the version string
           # compatible with Test PyPI.
-          sed --in-place 's/"root"/"local_scheme":"no-local-version","root"/g' setup.py
+          sed --in-place 's/version_file/local_scheme = "no-local-version"\nversion_file/g' pyproject.toml
 
       - name: Build source and wheel distributions
         run: |

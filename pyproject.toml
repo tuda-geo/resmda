@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "resmda"
+description = "A simple 2D reservoir modeller plus ESMDA"
+readme = "README.rst"
+requires-python = ">=3.10"
+authors = [
+  {name = "Dieter Werthmüller", email = "info@emsig.xyz"},
+  {name = "Gabriel Serrao Seabra"},
+  {name = "Femke C. Vossepoel"},
+]
+dependencies = [
+    "numpy",
+    "scipy>=1.10",
+    "scooby",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python",
+]
+dynamic = ["version"]
+
+[project.license]
+file = "LICENSE"
+
+[project.urls]
+Homepage = "https://tuda-geo.github.io/resmda"
+Documentation = "https://tuda-geo.github.io/resmda"
+Repository = "https://github.com/tuda-geo/resmda"
+
+[project.optional-dependencies]
+docs = [
+    "pooch",
+    "ipympl",
+    "sphinx>=7.3",
+    "numpydoc",
+    "ipykernel",
+    "matplotlib",
+    "pickleshare",
+    "sphinx_design",
+    "sphinx_numfig",
+    "sphinx_gallery>=0.16",
+    "sphinx_automodapi",
+    "pydata_sphinx_theme",
+]
+tests = [
+    "flake8",
+    "pytest",
+    "coveralls",
+    "pytest_cov",
+    "flake8-pyproject",
+]
+all = [
+    "resmda[docs]",
+    "resmda[tests]",
+]
+build = [
+    "setuptools_scm>=8",
+    "setuptools>=64",
+]
+
+[tool.setuptools.packages.find]
+include = ["resmda*"]
+
+[tool.setuptools_scm]
+version_file = "resmda/version.py"
+
+[tool.flake8]
+per-file-ignores = [
+    "__init__.py: F401",
+]
+
+[tool.coverage.run]
+relative_files = true
