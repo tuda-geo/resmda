@@ -4,8 +4,6 @@ prune examples
 prune .github
 exclude MANIFEST.in
 exclude Makefile
-exclude requirements.txt
-exclude requirements-dev.txt
-exclude setup.cfg
 exclude .gitignore
-exclude .coveragerc
+exclude .git_archival.txt
+exclude .gitattributes

@@ -14,10 +14,10 @@ help:
 	@echo ""
 
 install:
-	python -m pip install --no-build-isolation --no-deps -e .
+	python -m pip install -e .
 
 dev-install:
-	python -m pip install -r requirements-dev.txt && python -m pip install --no-build-isolation --no-deps -e .
+	python -m pip install -e .[all]
 
 .ONESHELL:
 pytest:
@@ -26,7 +26,7 @@ pytest:
 	coverage html
 
 flake8:
-	flake8 docs/conf.py setup.py resmda/ tests/ examples/
+	flake8 docs/conf.py resmda/ tests/ examples/
 
 html:
 	cd docs && make html
