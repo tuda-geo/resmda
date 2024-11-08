@@ -3,6 +3,8 @@ __pycache__/
 *.nc
 *.pdf
 *.zip
+*.log
+*.nc
 
 # Sphinx
 docs/_build/
@@ -11,6 +13,7 @@ docs/savefig/
 docs/gallery/*
 download/
 docs/sg_execution_times.rst
+examples/output/
 
 # Pytest and coverage related
 htmlcov

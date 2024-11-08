@@ -33,6 +33,10 @@ Documentation = "https://tuda-geo.github.io/resmda"
 Repository = "https://github.com/tuda-geo/resmda"
 
 [project.optional-dependencies]
+darts = [
+    "open-darts",
+    "open-darts-flash",
+]
 docs = [
     "pooch",
     "ipympl",
@@ -41,9 +45,11 @@ docs = [
     "ipykernel",
     "matplotlib",
     "pickleshare",
+    "resmda[darts]",
     "sphinx_design",
     "sphinx_numfig",
     "sphinx_gallery>=0.16",
+    "memory_profiler",
     "sphinx_automodapi",
     "pydata_sphinx_theme",
 ]
