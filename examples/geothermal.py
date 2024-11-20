@@ -26,33 +26,30 @@ import os
 
 import pooch
 import numpy as np
+import xarray as xr
 import pandas as pd
 import matplotlib.pyplot as plt
-import xarray as xr
 
 import resmda
 
 from darts.engines import redirect_darts_output
 from darts.models.darts_model import DartsModel
 from darts.physics.geothermal.physics import Geothermal
-from darts.physics.geothermal.property_container import PropertyContainer
-from darts.physics.properties.iapws import iapws_property_vec
 from darts.reservoirs.struct_reservoir import StructReservoir
+from darts.physics.geothermal.property_container import PropertyContainer
+
 redirect_darts_output("run_geothermal.log")
 
 # Adjust this path to a folder of your choice.
 data_path = os.path.join("..", "download", "")
 
+# For reproducibility, we instantiate a random number generator with a fixed
+# seed. For production, remove the seed!
+rng = np.random.default_rng(42)
+
 ###############################################################################
 # Load facies models
 # ------------------
-#
-# .. todo:
-#
-#       Recreate the fluvial model, store the input, and add all code at the
-#       end, just as in the fluvial example; create tag and give a link with a
-#       date.
-#
 
 fname = "facies_geothermal.nc"
 pooch.retrieve(
@@ -65,14 +62,19 @@ facies = xr.load_dataset(data_path + fname)
 
 
 ###############################################################################
+# Create a custom Darts Model class
+# ---------------------------------
+
 class Model(DartsModel):
+    """Custom DartsModel Class."""
+
     def __init__(self, perm, n_points=128):
-        # call base class constructor
+        """Initialize a new DartsModel instance."""
         super().__init__()
 
         self.timer.node["initialization"].start()
 
-        # parameters for the reservoir
+        # Parameters for the reservoir
         (nx, ny, nz) = (60, 60, 3)
         nb = nx * ny * nz
 
@@ -80,45 +82,63 @@ class Model(DartsModel):
         self.dy = 30
         dz = np.ones(nb) * 30
 
-        perm = perm.flatten('F')
+        perm = perm.flatten("F")
         poro = np.ones(nb) * 0.2
 
-        # discretize structured reservoir
+        # Discretize structured reservoir
         self.reservoir = StructReservoir(
-            self.timer, nx=nx, ny=ny, nz=nz, dx=self.dx, dy=self.dy, dz=dz,
-            permx=perm, permy=perm, permz=perm*0.1, poro=poro, depth=2000,
-            hcap=2200, rcond=500,
+            timer=self.timer,
+            nx=nx,
+            ny=ny,
+            nz=nz,
+            dx=self.dx,
+            dy=self.dy,
+            dz=dz,
+            permx=perm,
+            permy=perm,
+            permz=0.1*perm,
+            poro=poro,
+            depth=2000,
+            hcap=2200,
+            rcond=500,
         )
 
-        # add open boundaries
-        self.reservoir.boundary_volumes['yz_minus'] = 1e8
-        self.reservoir.boundary_volumes['yz_plus'] = 1e8
-        self.reservoir.boundary_volumes['xz_minus'] = 1e8
-        self.reservoir.boundary_volumes['xz_plus'] = 1e8
+        # Add open boundaries
+        self.reservoir.boundary_volumes["yz_minus"] = 1e8
+        self.reservoir.boundary_volumes["yz_plus"] = 1e8
+        self.reservoir.boundary_volumes["xz_minus"] = 1e8
+        self.reservoir.boundary_volumes["xz_plus"] = 1e8
 
-        # add well's locations
+        # Add well locations
         self.iw = [30, 30]
         self.jw = [14, 46]
 
-        # create pre-defined physics for geothermal
+        # Create pre-defined physics for geothermal
         property_container = PropertyContainer()
         self.physics = Geothermal(
-            self.timer, n_points, 1, 351, 1000, 10000, cache=False,
+            timer=self.timer,
+            n_points=n_points,
+            min_p=1,
+            max_p=351,
+            min_e=1000,
+            max_e=10000,
+            cache=False,
         )
         self.physics.add_property_region(property_container)
         self.physics.init_physics()
 
-        # timestep parameters
+        # Timestep parameters
         self.params.first_ts = 1e-3
         self.params.mult_ts = 2
         self.params.max_ts = 365
 
-        # nonlinear and linear solver tolerance
+        # Nonlinear and linear solver tolerance
         self.params.tolerance_newton = 1e-2
 
         self.timer.node["initialization"].stop()
 
     def set_wells(self):
+        """Set well parameters."""
         self.reservoir.add_well("INJ")
         for k in range(1, self.reservoir.nz):
             self.reservoir.add_perforation(
@@ -128,7 +148,7 @@ class Model(DartsModel):
                 multi_segment=True,
             )
 
-        # add well
+        # Add well
         self.reservoir.add_well("PRD")
         for k in range(1, self.reservoir.nz):
             self.reservoir.add_perforation(
@@ -139,7 +159,7 @@ class Model(DartsModel):
             )
 
     def set_initial_conditions(self):
-        # initialization with constant pressure and temperature
+        """Initialization with constant pressure and temperature."""
         self.physics.set_uniform_initial_conditions(
             self.reservoir.mesh,
             uniform_pressure=200,
@@ -147,9 +167,9 @@ class Model(DartsModel):
         )
 
     def set_boundary_conditions(self):
-        # activate wells with rate control for injector and producer
+        """Activate wells with rate control for injector and producer."""
         for i, w in enumerate(self.reservoir.wells):
-            if 'INJ' in w.name:
+            if "INJ" in w.name:
                 w.control = self.physics.new_rate_water_inj(4000, 300)
             else:
                 w.control = self.physics.new_rate_water_prod(4000)
@@ -160,7 +180,7 @@ class Model(DartsModel):
 # ------------------------------
 
 # Define the number of facies models
-n = facies['facies code'].shape[0]
+n = facies["facies code"].shape[0]
 
 # Create a 3D array for facies and permeability
 facies_array = np.zeros((n, 60, 60))
@@ -169,7 +189,7 @@ perm_array_3D = np.zeros((n, 60, 60, 3))
 
 # Assign facies and permeability values
 for i in range(n):
-    facies_array[i] = facies['facies code'][i, 0].values
+    facies_array[i] = facies["facies code"][i, 0].values
 
     perm_array[i][facies_array[i] == 0] = 100
     perm_array[i][facies_array[i] == 1] = 200
@@ -191,9 +211,9 @@ perm_min = 100
 for i in range(5):
     fig, ax = plt.subplots(figsize=(6, 6))
 
-    ax.set_title('Permeability')
-    im = ax.imshow(perm_array[i], origin='lower', cmap='viridis')
-    fig.colorbar(im, ax=ax, label='Permeability (mD)')
+    ax.set_title("Permeability")
+    im = ax.imshow(perm_array[i], origin="lower")
+    fig.colorbar(im, ax=ax, label="Permeability (mD)")
     plt.tight_layout()
 
 
@@ -201,38 +221,18 @@ for i in range(5):
 # Create DARTS simulation functions
 # ---------------------------------
 
-def sim_true(perm_array):
-    m = Model(perm=perm_array)
-    m.init()
-
-    # initial conditions
-    m.run(1e-3)
-
-    for t in range(3):
-        # run and output every 10 years (30 in total)
-        m.run(10*365, restart_dt=365)
-
-    td = pd.DataFrame.from_dict(m.physics.engine.time_data)
-
-    time = td['time'].values / 365
-    temp = td['PRD : temperature (K)'].values
-
-    if len(time) > 31:
-        time = time[1:]
-        temp = temp[1:]
-
-    return temp
-
-
-###############################################################################
-
-def sim(perm_array):
-    temp_data = []
-    for perm in perm_array:
+def simulation(perm_array):
+    """Simulation function."""
+    reduce = False
+    if perm_array.ndim == 3:
+        reduce = True
+        perm_array = perm_array[None, ...]
+    temp_data = np.zeros((perm_array.shape[0], 31))
+    for i, perm in enumerate(perm_array):
         m = Model(perm=perm)
         m.init()
 
-        # initial conditions
+        # Initial conditions
         m.run(1e-3)
 
         for t in range(3):
@@ -241,8 +241,8 @@ def sim(perm_array):
 
         td = pd.DataFrame.from_dict(m.physics.engine.time_data)
 
-        time = td['time'].values / 365
-        temp = td['PRD : temperature (K)'].values
+        time = td["time"].values / 365
+        temp = td["PRD : temperature (K)"].values
 
         # I've done this because the first time step is sometimes cut and then
         # repeated in the time_data if you can change the time_data to not
@@ -250,9 +250,11 @@ def sim(perm_array):
         if len(time) > 31:
             time = time[1:]
             temp = temp[1:]
-        temp_data.append(temp)
+        temp_data[i, :] = temp
 
-    return np.array(temp_data)
+    if reduce:
+        temp_data = temp_data[0, :]
+    return temp_data
 
 
 ###############################################################################
@@ -264,28 +266,27 @@ perm_true = perm_array_3D[0]
 perm_prior = perm_array_3D[1:]
 
 # Simulate true data and prior data
-data_true = sim_true(perm_true)
-data_prior = sim(perm_prior)
+data_true = simulation(perm_true)
+data_prior = simulation(perm_prior)
 
 time = np.arange(0, 31, 1)
 
 # Add noise to the true data and create observed data
 dstd = 0.2
-rng = np.random.default_rng(42)
 data_obs = rng.normal(data_true, dstd)
 
 # Plot the true, prior and observed data
 plt.figure(figsize=(10, 6))
-plt.scatter(time, data_obs, label='Observed', color='red', zorder=10)
+plt.scatter(time, data_obs, label="Observed", color="red", zorder=10)
 for i in range(np.shape(data_prior)[0]):
     if i == 0:
-        plt.plot(time, data_prior[i], label='Prior', color='grey', alpha=0.4)
+        plt.plot(time, data_prior[i], label="Prior", color="grey", alpha=0.4)
     else:
-        plt.plot(time, data_prior[i], color='grey', alpha=0.4)
+        plt.plot(time, data_prior[i], color="grey", alpha=0.4)
 plt.legend()
-plt.xlabel('Time (years)')
-plt.ylabel('Temperature (K)')
-plt.title('Temperature at Production Well')
+plt.xlabel("Time (years)")
+plt.ylabel("Temperature (K)")
+plt.title("Temperature at Production Well")
 plt.show()
 
 
@@ -302,7 +303,7 @@ def restrict_permeability(x):
 # Create input dictionary for ES-MDA
 inp = {
     "model_prior": perm_prior,
-    "forward": sim,
+    "forward": simulation,
     "data_obs": data_obs,
     "sigma": dstd,
     "alphas": 4,
@@ -321,22 +322,22 @@ perm_post, data_post = resmda.esmda(**inp)
 ###############################################################################
 
 # Plot the prior, observed data and posterior data
-plt.scatter(time, data_obs, label='Observed', color='red', zorder=10)
+plt.scatter(time, data_obs, label="Observed", color="red", zorder=10)
 for i in range(np.shape(data_post)[0]):
     if i == 0:
-        plt.plot(time, data_post[i], label='Posterior', color='blue')
+        plt.plot(time, data_post[i], label="Posterior", color="blue")
     else:
-        plt.plot(time, data_post[i], color='blue')
+        plt.plot(time, data_post[i], color="blue")
 for i in range(np.shape(data_prior)[0]):
     if i == 0:
-        plt.plot(time, data_prior[i], label='Prior', color='grey', alpha=0.4)
+        plt.plot(time, data_prior[i], label="Prior", color="grey", alpha=0.4)
     else:
-        plt.plot(time, data_prior[i], color='grey', alpha=0.4)
+        plt.plot(time, data_prior[i], color="grey", alpha=0.4)
 
 plt.legend()
-plt.xlabel('Time (years)')
-plt.ylabel('Temperature (K)')
-plt.title('Temperature at Production Well')
+plt.xlabel("Time (years)")
+plt.ylabel("Temperature (K)")
+plt.title("Temperature at Production Well")
 plt.show()
 
 
@@ -346,11 +347,19 @@ plt.show()
 for i in range(5):
     fig, ax = plt.subplots(figsize=(6, 6))
 
-    ax.set_title('Permeability')
-    im = ax.imshow(perm_post[i, :, :, 0], origin='lower', cmap='viridis')
-    fig.colorbar(im, ax=ax, label='Permeability (mD)')
+    ax.set_title("Permeability")
+    im = ax.imshow(perm_post[i, :, :, 0], origin="lower")
+    fig.colorbar(im, ax=ax, label="Permeability (mD)")
     plt.tight_layout()
 
+
+###############################################################################
+# Just for testing; store output
+# ------------------------------
+
+import emg3d
+emg3d.save("output.h5", time=time, data_obs=data_obs, data_prior=data_prior,
+           data_post=data_post)
 
 ###############################################################################
 # Reproduce the facies
@@ -399,12 +408,12 @@ for i in range(5):
 #     facies = fluvsim.run()
 #
 #     # Convert spacing dictionary values to a tuple
-#     facies.attrs['spacing'] = tuple(facies.attrs['spacing'].values())
+#     facies.attrs["spacing"] = tuple(facies.attrs["spacing"].values())
 #     # Convert origin dictionary values to a tuple
-#     facies.attrs['origin'] = tuple(facies.attrs['origin'].values())
+#     facies.attrs["origin"] = tuple(facies.attrs["origin"].values())
 #
 #     # ==== Save the facies dataset to a NetCDF file ====
-#     facies.to_netcdf('facies_geothermal.nc')
+#     facies.to_netcdf("facies_geothermal.nc")
 
 ###############################################################################
 resmda.Report()

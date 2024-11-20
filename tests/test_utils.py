@@ -78,8 +78,8 @@ def test_Report(capsys):
     # We just ensure the shown packages do not change (core and optional).
     out1 = utils.Report()
     out2 = scooby.Report(
-            core=['numpy', 'scipy', 'numba', 'resmda'],
-            optional=['matplotlib', 'IPython'],
+            core=['resmda', 'numpy', 'scipy'],
+            optional=['darts', 'dartsflash', 'matplotlib', 'IPython'],
             ncol=3)
 
     # Ensure they're the same; exclude time to avoid errors.
