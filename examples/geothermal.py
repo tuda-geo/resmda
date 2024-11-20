@@ -351,5 +351,60 @@ for i in range(5):
     fig.colorbar(im, ax=ax, label='Permeability (mD)')
     plt.tight_layout()
 
+
+###############################################################################
+# Reproduce the facies
+# --------------------
+#
+# .. note::
+#
+#     The following cell is about how to reproduce the facies data loaded in
+#     ``facies_geothermal.nc``. This was created using ``geomodpy``.
+#
+#     ``geomodpy`` (Guillaume Rongier, 2023) is not open-source yet. The
+#     functionality of geomodpy that we use here is a python wrapper for the
+#     Fortran library ``FLUVSIM`` published in:
+#
+#         **Deutsch, C. V., and T. T. Tran**, 2002, FLUVSIM: a program for
+#         object-based stochastic modeling of fluvial depositional systems:
+#         Computers & Geosciences, 28(4), 525--535.
+#
+#         DOI: `10.1016/S0098-3004(01)00075-9
+#         <https://doi.org/10.1016/S0098-3004(01)00075-9>`_.
+#
+#
+# .. code-block:: python
+#
+#     # ==== Create a fluvsim instance with the geological parameters ====
+#
+#     # FLUVSIM Version used: 2.900
+#     from geomodpy.wrapper.fluvsim import FLUVSIM
+#
+#     fluvsim = FLUVSIM(
+#         channel_orientation=(60., 90., 120.),
+#         # Proportions for each facies
+#         channel_prop=0.5,
+#         crevasse_prop=0.0,
+#         levee_prop=0.0,
+#         # Parameters defining the grid
+#         shape=(60, 60),
+#         spacing=(60., 60.),
+#         origin=(0.5, 0.5),
+#         # Number of realizations and random seed
+#         n_realizations=101,
+#         seed=42,
+#     )
+#
+#     # ==== Create the facies ====
+#     facies = fluvsim.run()
+#
+#     # Convert spacing dictionary values to a tuple
+#     facies.attrs['spacing'] = tuple(facies.attrs['spacing'].values())
+#     # Convert origin dictionary values to a tuple
+#     facies.attrs['origin'] = tuple(facies.attrs['origin'].values())
+#
+#     # ==== Save the facies dataset to a NetCDF file ====
+#     facies.to_netcdf('facies_geothermal.nc')
+
 ###############################################################################
 resmda.Report()
