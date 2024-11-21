@@ -1,10 +1,10 @@
-
 r"""
 Geothermal Case Study
 =====================
 
 **This example was contributed by Mona Devos.**
 
+**Example how to use `resmda` with an external modeller, here with `darts`.**
 
 .. note::
 
@@ -59,6 +59,26 @@ pooch.retrieve(
     path=data_path,
 )
 facies = xr.load_dataset(data_path + fname)
+
+
+###############################################################################
+# Just for testing; load output
+# -----------------------------
+#
+# import emg3d  # noqa
+# dd = emg3d.load('output.h5')
+# print(dd.keys())
+#
+# time = dd['time']
+#
+# data_true = dd['data_true']
+# data_obs = dd['data_obs']
+# data_prior = dd['data_prior']
+# data_post = dd['data_post']
+#
+# perm_true = dd['perm_true']
+# perm_prior = dd['perm_prior']
+# perm_post = dd['perm_post']
 
 
 ###############################################################################
@@ -184,19 +204,19 @@ n = facies["facies code"].shape[0]
 
 # Create a 3D array for facies and permeability
 facies_array = np.zeros((n, 60, 60))
-perm_array = np.zeros((n, 60, 60))
-perm_array_3D = np.zeros((n, 60, 60, 3))
+permeabilities = np.zeros((n, 60, 60))
+permeabilities_3D = np.zeros((n, 60, 60, 3))
 
 # Assign facies and permeability values
 for i in range(n):
     facies_array[i] = facies["facies code"][i, 0].values
 
-    perm_array[i][facies_array[i] == 0] = 100
-    perm_array[i][facies_array[i] == 1] = 200
-    perm_array[i][facies_array[i] == 2] = 200
-    perm_array[i][facies_array[i] == 3] = 200
+    permeabilities[i][facies_array[i] == 0] = 100
+    permeabilities[i][facies_array[i] == 1] = 200
+    permeabilities[i][facies_array[i] == 2] = 200
+    permeabilities[i][facies_array[i] == 3] = 200
 
-    perm_array_3D[i] = np.stack([perm_array[i]]*3, axis=-1)
+    permeabilities_3D[i] = np.stack([permeabilities[i]]*3, axis=-1)
 
 # Assign maximum and minimum values for permeability
 perm_max = 200
@@ -207,28 +227,30 @@ perm_min = 100
 # Plot example permeability
 # -------------------------
 
-# Plot 5 first facies models
-for i in range(5):
-    fig, ax = plt.subplots(figsize=(6, 6))
-
-    ax.set_title("Permeability")
-    im = ax.imshow(perm_array[i], origin="lower")
-    fig.colorbar(im, ax=ax, label="Permeability (mD)")
-    plt.tight_layout()
+# Plot 10 first permeability models
+fig, axs = plt.subplots(
+    2, 5, figsize=(8, 3), sharex=True, sharey=True, constrained_layout=True)
+axs = axs.ravel()
+fig.suptitle("Permeabilities")
+for i in range(10):
+    im = axs[i].imshow(
+        permeabilities[i, ...], vmin=perm_min, vmax=perm_max, origin="lower"
+    )
+fig.colorbar(im, ax=axs, label="Log Permeability (mD)")
 
 
 ###############################################################################
 # Create DARTS simulation functions
 # ---------------------------------
 
-def simulation(perm_array):
+def simulation(permeabilities):
     """Simulation function."""
     reduce = False
-    if perm_array.ndim == 3:
+    if permeabilities.ndim == 3:
         reduce = True
-        perm_array = perm_array[None, ...]
-    temp_data = np.zeros((perm_array.shape[0], 31))
-    for i, perm in enumerate(perm_array):
+        permeabilities = permeabilities[None, ...]
+    temp_data = np.zeros((permeabilities.shape[0], 31))
+    for i, perm in enumerate(permeabilities):
         m = Model(perm=perm)
         m.init()
 
@@ -262,8 +284,8 @@ def simulation(perm_array):
 # ---------------------------------------------------------------------------
 
 # Assign true permeability (first) and prior permeability
-perm_true = perm_array_3D[0]
-perm_prior = perm_array_3D[1:]
+perm_true = permeabilities_3D[0]
+perm_prior = permeabilities_3D[1:]
 
 # Simulate true data and prior data
 data_true = simulation(perm_true)
@@ -276,18 +298,17 @@ dstd = 0.2
 data_obs = rng.normal(data_true, dstd)
 
 # Plot the true, prior and observed data
-plt.figure(figsize=(10, 6))
-plt.scatter(time, data_obs, label="Observed", color="red", zorder=10)
+fig, ax = plt.subplots(1, 1)
+ax.scatter(time, data_obs, label="Observed", color="red", zorder=10)
 for i in range(np.shape(data_prior)[0]):
     if i == 0:
-        plt.plot(time, data_prior[i], label="Prior", color="grey", alpha=0.4)
+        ax.plot(time, data_prior[i], label="Prior", color="grey", alpha=0.4)
     else:
-        plt.plot(time, data_prior[i], color="grey", alpha=0.4)
-plt.legend()
-plt.xlabel("Time (years)")
-plt.ylabel("Temperature (K)")
-plt.title("Temperature at Production Well")
-plt.show()
+        ax.plot(time, data_prior[i], color="grey", alpha=0.4)
+ax.legend()
+ax.set_xlabel("Time (years)")
+ax.set_ylabel("Temperature (K)")
+ax.set_title("Temperature at Production Well")
 
 
 ###############################################################################
@@ -322,44 +343,50 @@ perm_post, data_post = resmda.esmda(**inp)
 ###############################################################################
 
 # Plot the prior, observed data and posterior data
-plt.scatter(time, data_obs, label="Observed", color="red", zorder=10)
+fig, ax = plt.subplots(1, 1)
+
+ax.scatter(time, data_obs, label="Observed", color="red", zorder=10)
+
 for i in range(np.shape(data_post)[0]):
     if i == 0:
-        plt.plot(time, data_post[i], label="Posterior", color="blue")
+        ax.plot(time, data_post[i], label="Posterior", color="blue")
     else:
-        plt.plot(time, data_post[i], color="blue")
+        ax.plot(time, data_post[i], color="blue")
+
 for i in range(np.shape(data_prior)[0]):
     if i == 0:
-        plt.plot(time, data_prior[i], label="Prior", color="grey", alpha=0.4)
+        ax.plot(time, data_prior[i], label="Prior", color="grey", alpha=0.4)
     else:
-        plt.plot(time, data_prior[i], color="grey", alpha=0.4)
+        ax.plot(time, data_prior[i], color="grey", alpha=0.4)
 
 plt.legend()
-plt.xlabel("Time (years)")
-plt.ylabel("Temperature (K)")
-plt.title("Temperature at Production Well")
-plt.show()
+plt.set_xlabel("Time (years)")
+plt.set_ylabel("Temperature (K)")
+plt.set_title("Temperature at Production Well")
 
 
 ###############################################################################
 
-# Plot the first 5 posterior permeability  models
-for i in range(5):
-    fig, ax = plt.subplots(figsize=(6, 6))
-
-    ax.set_title("Permeability")
-    im = ax.imshow(perm_post[i, :, :, 0], origin="lower")
-    fig.colorbar(im, ax=ax, label="Permeability (mD)")
-    plt.tight_layout()
+# Plot 10 first posterior permeability models
+fig, axs = plt.subplots(
+    2, 5, figsize=(8, 3), sharex=True, sharey=True, constrained_layout=True)
+axs = axs.ravel()
+fig.suptitle("Permeabilities")
+for i in range(10):
+    im = axs[i].imshow(
+        perm_post[i, :, :, 0], vmin=perm_min, vmax=perm_max, origin="lower"
+    )
+fig.colorbar(im, ax=axs, label="Log Permeability (mD)")
 
 
 ###############################################################################
 # Just for testing; store output
 # ------------------------------
 
-import emg3d
+import emg3d  # noqa
 emg3d.save("output.h5", time=time, data_obs=data_obs, data_prior=data_prior,
            data_post=data_post)
+
 
 ###############################################################################
 # Reproduce the facies

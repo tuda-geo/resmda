@@ -79,7 +79,9 @@ def test_Report(capsys):
     out1 = utils.Report()
     out2 = scooby.Report(
             core=['resmda', 'numpy', 'scipy'],
-            optional=['darts', 'dartsflash', 'matplotlib', 'IPython'],
+            optional=[
+                'open-darts', 'open-darts-flash', 'matplotlib', 'IPython'
+            ],
             ncol=3)
 
     # Ensure they're the same; exclude time to avoid errors.

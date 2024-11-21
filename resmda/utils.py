@@ -191,6 +191,6 @@ class Report(ScoobyReport):
         kwargs = {'ncol': 3, **kwargs}
         kwargs['core'] = ['resmda', 'numpy', 'scipy']
         kwargs['optional'] = [
-            'darts', 'dartsflash', 'matplotlib', 'IPython',
+            'open-darts', 'open-darts-flash', 'matplotlib', 'IPython',
         ]
         super().__init__(**kwargs)
