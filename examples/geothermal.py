@@ -24,6 +24,7 @@ Geothermal Case Study
 """
 import os
 
+import h5py
 import pooch
 import numpy as np
 import xarray as xr
@@ -65,20 +66,16 @@ facies = xr.load_dataset(data_path + fname)
 # Just for testing; load output
 # -----------------------------
 #
-# import emg3d  # noqa
-# dd = emg3d.load('output.h5')
-# print(dd.keys())
-#
-# time = dd['time']
-#
-# data_true = dd['data_true']
-# data_obs = dd['data_obs']
-# data_prior = dd['data_prior']
-# data_post = dd['data_post']
-#
-# perm_true = dd['perm_true']
-# perm_prior = dd['perm_prior']
-# perm_post = dd['perm_post']
+# fname = 'output.h5'
+# with h5py.File(fname, 'r') as h5file:
+#     time = h5file['time'][()]
+#     data_true = h5file['data_true'][()]
+#     data_obs = h5file['data_obs'][()]
+#     data_prior = h5file['data_prior'][()]
+#     data_post = h5file['data_post'][()]
+#     perm_true = h5file['perm_true'][()]
+#     perm_prior = h5file['perm_prior'][()]
+#     perm_post = h5file['perm_post'][()]
 
 
 ###############################################################################
@@ -291,7 +288,7 @@ perm_prior = permeabilities_3D[1:]
 data_true = simulation(perm_true)
 data_prior = simulation(perm_prior)
 
-time = np.arange(0, 31, 1)
+time = np.arange(31.)
 
 # Add noise to the true data and create observed data
 dstd = 0.2
@@ -359,10 +356,10 @@ for i in range(np.shape(data_prior)[0]):
     else:
         ax.plot(time, data_prior[i], color="grey", alpha=0.4)
 
-plt.legend()
-plt.set_xlabel("Time (years)")
-plt.set_ylabel("Temperature (K)")
-plt.set_title("Temperature at Production Well")
+ax.legend()
+ax.set_xlabel("Time (years)")
+ax.set_ylabel("Temperature (K)")
+ax.set_title("Temperature at Production Well")
 
 
 ###############################################################################
@@ -380,12 +377,17 @@ fig.colorbar(im, ax=axs, label="Log Permeability (mD)")
 
 
 ###############################################################################
-# Just for testing; store output
-# ------------------------------
-
-import emg3d  # noqa
-emg3d.save("output.h5", time=time, data_obs=data_obs, data_prior=data_prior,
-           data_post=data_post)
+fname = 'output.h5'
+compr = 'gzip'
+with h5py.File(fname, 'w') as h5file:
+    h5file.create_dataset('time', data=time, compression=compr)
+    h5file.create_dataset('data_true', data=data_true, compression=compr)
+    h5file.create_dataset('data_obs', data=data_obs, compression=compr)
+    h5file.create_dataset('data_prior', data=data_prior, compression=compr)
+    h5file.create_dataset('data_post', data=data_post, compression=compr)
+    h5file.create_dataset('perm_true', data=perm_true, compression=compr)
+    h5file.create_dataset('perm_prior', data=perm_prior, compression=compr)
+    h5file.create_dataset('perm_post', data=perm_post, compression=compr)
 
 
 ###############################################################################
