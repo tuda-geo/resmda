@@ -33,10 +33,6 @@ Documentation = "https://tuda-geo.github.io/resmda"
 Repository = "https://github.com/tuda-geo/resmda"
 
 [project.optional-dependencies]
-darts = [  # Darts is changing a lot; for the example, this works
-    "open-darts==1.1.4",
-    "open-darts-flash==0.5.0",
-]
 docs = [
     "pooch",
     "ipympl",
@@ -45,7 +41,6 @@ docs = [
     "ipykernel",
     "matplotlib",
     "pickleshare",
-    "resmda[darts]",
     "sphinx_design",
     "sphinx_numfig",
     "sphinx_gallery>=0.16",

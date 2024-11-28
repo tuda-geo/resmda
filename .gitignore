@@ -6,8 +6,8 @@ docs/_build/
 docs/api/resmda*
 docs/savefig/
 docs/gallery/*
-download/
 docs/sg_execution_times.rst
+examples/data/
 
 # Pytest and coverage related
 htmlcov

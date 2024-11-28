@@ -2,9 +2,11 @@ r"""
 Localization
 ==========================
 
-This example follows contextually :ref:`sphx_glr_gallery_basicreservoir.py`,
-but uses several well doublets and compares ES-MDA with and without
+Example using several well doublets and compares ES-MDA with and without
 localization.
+
+The example follows contextually :ref:`sphx_glr_gallery_basicreservoir.py`.
+
 """
 import numpy as np
 import matplotlib.pyplot as plt
