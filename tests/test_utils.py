@@ -78,11 +78,10 @@ def test_Report(capsys):
     # We just ensure the shown packages do not change (core and optional).
     out1 = utils.Report()
     out2 = scooby.Report(
-            core=['resmda', 'numpy', 'scipy'],
-            optional=[
-                'open-darts', 'open-darts-flash', 'matplotlib', 'IPython'
-            ],
-            ncol=3)
+        core=['resmda', 'numpy', 'scipy'],
+        optional=['matplotlib', 'IPython'],
+        ncol=3,
+    )
 
     # Ensure they're the same; exclude time to avoid errors.
     assert out1.__repr__()[115:] == out2.__repr__()[115:]
