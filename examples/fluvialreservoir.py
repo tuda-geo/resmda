@@ -29,7 +29,6 @@ reproduce the facies.
 
 """
 import json
-from os.path import join
 
 import pooch
 import numpy as np
@@ -50,13 +49,13 @@ rng = np.random.default_rng(1513)
 folder = "data"
 ffacies = "facies.npy"
 finput = "facies.json"
-pooch.retrieve(
+fpfacies = pooch.retrieve(
     "https://raw.github.com/tuda-geo/data/2024-06-18/resmda/"+ffacies,
     "4bfe56c836bf17ca63453c37e5da91cb97bbef8cc6c08d605f70bd64fe7488b2",
     fname=ffacies,
     path=folder,
 )
-facies = np.load(join(folder, ffacies))
+facies = np.load(fpfacies)
 ne, nx, ny = facies.shape
 
 # Define mean permeability per facies
@@ -363,13 +362,13 @@ for i, txt in enumerate(["No l", "L"]):
 #         facies[i*nreal:(i+1)*nreal, ...] = realizations.astype("i4")
 #
 #
-#     # ==== Save the output ====
+#     # ==== Save the outputs ====
 #
 #     # Save the input parameters to FLUVSIM as a json.
-#     with open(join(folder, finput), "w") as f:
+#     with open("facies.json", "w") as f:
 #         json.dump(all_params, f, indent=2)
 #     # Save the facies values as a compressed npy-file.
-#     np.save(join(folder, ffacies), facies.squeeze(), allow_pickle=False)
+#     np.save("facies.npy", facies.squeeze(), allow_pickle=False)
 
 
 ###############################################################################
@@ -379,13 +378,13 @@ for i, txt in enumerate(["No l", "L"]):
 # These are, just as the data themselves, online at
 # https://github.com/tuda-geo/data/resmda.
 
-pooch.retrieve(
+fpinput = pooch.retrieve(
     "https://raw.github.com/tuda-geo/data/2024-06-18/resmda/"+finput,
     "db2cb8a620775c68374c24a4fa811f6350381c7fc98a823b9571136d307540b4",
     fname=finput,
     path=folder,
 )
-with open(join(folder, finput), "r") as f:
+with open(fpinput, "r") as f:
     print(json.dumps(json.load(f), indent=2))
 
 ###############################################################################

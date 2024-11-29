@@ -34,7 +34,6 @@ Repository = "https://github.com/tuda-geo/resmda"
 
 [project.optional-dependencies]
 docs = [
-    "h5py",
     "pooch",
     "ipympl",
     "sphinx>=7.3",

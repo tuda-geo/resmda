@@ -45,12 +45,8 @@ reproduce the facies.
 
 
 """
-from os.path import join
-
-import h5py
 import pooch
 import numpy as np
-import xarray as xr
 import matplotlib.pyplot as plt
 
 import resmda
@@ -69,16 +65,16 @@ rng = np.random.default_rng(42)
 # the notebook.)
 
 folder = "data"
-ffacies = "facies_geothermal.nc"
+ffacies = "facies_geothermal.npy"
 
-pooch.retrieve(
+fpfacies = pooch.retrieve(
     "https://github.com/tuda-geo/data/raw/refs/heads/main/resmda/"+ffacies,
-    "814956d887f6e688eaae9a2c144aa0e6120361a8fb6ebe00f17d27038d877df3",
+    "b24e319008f4b39cd8dfb153bea46133a7a67ccb212cec9ff65e9551f2b79234",
     fname=ffacies,
     path=folder,
 )
 
-facies = xr.load_dataset(join(folder, ffacies))
+facies = np.load(fpfacies)
 
 
 ###############################################################################
@@ -88,24 +84,24 @@ facies = xr.load_dataset(join(folder, ffacies))
 # (Not needed if you compute the results yourself, as described after the
 # figures.)
 
-fdarts = "darts_output_geothermal.h5"
+fdarts = "darts_output_geothermal.npz"
 
-pooch.retrieve(
+fpdarts = pooch.retrieve(
     "https://github.com/tuda-geo/data/raw/refs/heads/main/resmda/"+fdarts,
-    "9b9c3f55a62694939f7ecb4fb8f046b433b84d922aa5e094483662e36ae25e9e",
+    "bc66b72aa68786f9eb6a93a37af0c5d277a3b83dc877c19513fbe95e86a54e63",
     fname=fdarts,
     path=folder,
 )
 
-with h5py.File(join(folder, fdarts), "r") as hf:
-    time = hf["time"][()]
-    data_true = hf["data_true"][()]
-    data_obs = hf["data_obs"][()]
-    data_prior = hf["data_prior"][()]
-    data_post = hf["data_post"][()]
-    perm_true = hf["perm_true"][()]
-    perm_prior = hf["perm_prior"][()]
-    perm_post = hf["perm_post"][()]
+pc_darts = np.load(fpdarts)
+time = pc_darts["time"].astype("d")
+data_true = pc_darts["data_true"].astype("d")
+data_obs = pc_darts["data_obs"].astype("d")
+data_prior = pc_darts["data_prior"].astype("d")
+data_post = pc_darts["data_post"].astype("d")
+perm_true = pc_darts["perm_true"].astype("d")
+perm_prior = pc_darts["perm_prior"].astype("d")
+perm_post = pc_darts["perm_post"].astype("d")
 
 
 ###############################################################################
@@ -113,7 +109,7 @@ with h5py.File(join(folder, fdarts), "r") as hf:
 # ------------------------------
 
 # Define the number of facies models
-n = facies["facies code"].shape[0]
+n = facies.shape[0]
 
 # Create a 3D array for facies and permeability
 facies_array = np.zeros((n, 60, 60))
@@ -122,7 +118,7 @@ permeabilities_3D = np.zeros((n, 60, 60, 3))
 
 # Assign facies and permeability values
 for i in range(n):
-    facies_array[i] = facies["facies code"][i, 0].values
+    facies_array[i] = facies[i, 0]
 
     permeabilities[i][facies_array[i] == 0] = 100
     permeabilities[i][facies_array[i] == 1] = 200
@@ -437,18 +433,18 @@ fig.colorbar(im, ax=axs, label="Log Permeability (mD)")
 #
 # .. code-block:: python
 #
-#     fname = 'output.h5'
-#     compr = 'gzip'
-#     with h5py.File(fname, 'w') as hf:
-#         hf.create_dataset('time', data=time, compression=compr)
-#         hf.create_dataset('data_true', data=data_true, compression=compr)
-#         hf.create_dataset('data_obs', data=data_obs, compression=compr)
-#         hf.create_dataset('data_prior', data=data_prior, compression=compr)
-#         hf.create_dataset('data_post', data=data_post, compression=compr)
-#         hf.create_dataset('perm_true', data=perm_true, compression=compr)
-#         hf.create_dataset('perm_prior', data=perm_prior, compression=compr)
-#         hf.create_dataset('perm_post', data=perm_post, compression=compr)
-
+#     np.savez_compressed(
+#         file="darts_output_geothermal.npz", 
+#         time=time.astype("i4"),
+#         data_true=data_true.astype("f"),
+#         data_obs=data_obs.astype("f"),
+#         data_prior=data_prior.astype("f"),
+#         data_post=data_post.astype("f"),
+#         perm_true=perm_true.astype("f"),
+#         perm_prior=perm_prior.astype("f"),
+#         perm_post=perm_post.astype("f"),
+#         allow_pickle=False,
+#     )
 
 ###############################################################################
 # Reproduce the facies
@@ -473,11 +469,10 @@ fig.colorbar(im, ax=axs, label="Log Permeability (mD)")
 #
 # .. code-block:: python
 #
-#     # ==== Create a fluvsim instance with the geological parameters ====
-#
 #     # FLUVSIM Version used: 2.900
 #     from geomodpy.wrapper.fluvsim import FLUVSIM
 #
+#     # Create a fluvsim instance with the geological parameters
 #     fluvsim = FLUVSIM(
 #         channel_orientation=(60., 90., 120.),
 #         # Proportions for each facies
@@ -493,16 +488,12 @@ fig.colorbar(im, ax=axs, label="Log Permeability (mD)")
 #         seed=42,
 #     )
 #
-#     # ==== Create the facies ====
+#     # Run fluvsim to create the facies
 #     facies = fluvsim.run()
+#     facies = facies.data_vars["facies code"].values.astype("i4")
 #
-#     # Convert spacing dictionary values to a tuple
-#     facies.attrs["spacing"] = tuple(facies.attrs["spacing"].values())
-#     # Convert origin dictionary values to a tuple
-#     facies.attrs["origin"] = tuple(facies.attrs["origin"].values())
-#
-#     # ==== Save the facies dataset to a NetCDF file ====
-#     facies.to_netcdf(join(folder, ffacies))
+#     # Save the facies values as a compressed npy-file.
+#     np.save("facies_geothermal.npy", facies, allow_pickle=False)
 
 
 ###############################################################################
