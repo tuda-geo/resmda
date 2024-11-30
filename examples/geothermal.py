@@ -149,6 +149,11 @@ perm_prior = perm[1:, :, :, :]
 # --------------------
 # Plot the first 12 prior permeability models; grey shows the channels with
 # higher permeability.
+#
+# **TODO Gabriel:**
+# It probably would be good to plot the wells in the permeability plots, right?
+# In the darts model, are those cell indices for the wells? Can you add some
+# symbols here for the wells?
 
 fopts = {"sharex": True, "sharey": True, "constrained_layout": True}
 popts = {"vmin": perm_min, "vmax": perm_max, "origin": "lower"}
@@ -351,6 +356,10 @@ else:
 ###############################################################################
 # Plot prior data
 # '''''''''''''''
+#
+# **TODO Gabriel:**
+# How to interpret that there are, sort of, two different paths with slightly
+# different temperatures?
 
 fig, ax = plt.subplots()
 ax.scatter(years, data_obs, label="Observed", color="red", zorder=10)
@@ -403,6 +412,9 @@ else:
 ###############################################################################
 # Plot posterior data
 # '''''''''''''''''''
+#
+# **TODO Gabriel:**
+# How to interpret that "the colder path" won?
 
 fig, ax = plt.subplots()
 ax.scatter(years, data_obs, label="Observed", color="red", zorder=10)
@@ -419,6 +431,10 @@ ax.set_title("Temperature at Production Well")
 # Plot posterior permeabilities
 # '''''''''''''''''''''''''''''
 # Plot the first 12 posterior permeability models.
+#
+# **TODO Gabriel:**
+# Is it insightful to show the posterior permeability?
+
 
 fig, axs = plt.subplots(3, 4, **fopts)
 axs = axs.ravel()
