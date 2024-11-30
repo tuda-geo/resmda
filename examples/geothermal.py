@@ -95,7 +95,7 @@ fdarts = "darts_output_geothermal.npz"
 # Load Facies: Not needed if you compute the facies yourself,
 #              as described at the end of the notebook.
 fpfacies = pooch.retrieve(
-    "https://github.com/tuda-geo/data/raw/refs/heads/main/resmda/" + ffacies,
+    "https://raw.github.com/tuda-geo/data/2024-11-30/resmda/"+ffacies,
     "9b18f1c80aea93d7973effafde001aa7e72a21ac91edf08e3899d5486998ad2e",
     fname=ffacies,
     path=folder,
@@ -105,8 +105,8 @@ facies = np.load(fpfacies)
 # Load pre-computed Darts result; only needed if `compute_darts` is `False`.
 if not compute_darts:
     fpdarts = pooch.retrieve(
-        "https://raw.github.com/tuda-geo/data/2024-11-29/resmda/"+fdarts,
-        "bc66b72aa68786f9eb6a93a37af0c5d277a3b83dc877c19513fbe95e86a54e63",
+        "https://raw.github.com/tuda-geo/data/2024-11-30/resmda/"+fdarts,
+        "5622729cd5dc7214de8a199512ace39bda48bff113b2eddb0c48593a57c020d1",
         fname=fdarts,
         path=folder,
     )
@@ -125,8 +125,8 @@ if not compute_darts:
 
 nx, ny = 60, 60
 nz = 3
-dx, dy, dz = 60, 60, 60
-ne = 100  # 100  # TODO DEVELOP
+dx, dy, dz = 30, 30, 30
+ne = 100
 years = np.arange(31)  # Time: we are modelling 30 years:
 
 # Minimum and maximum values for permeability
@@ -319,9 +319,12 @@ if compute_darts:
                 m.run(365, restart_dt=365)
 
             # Store temperature
+            # (Sometimes the first time step is cut and then repeated in the
+            #  time_data; if you can change the time_data to not report cut
+            #  timesteps, then this may not be necessary.)
             temperature[i, :] = np.array(
                 m.physics.engine.time_data["PRD : temperature (K)"]
-            )
+            )[-years.size:]
 
         return temperature
 
