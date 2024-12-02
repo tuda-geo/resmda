@@ -437,6 +437,10 @@ else:
 # **TODO Gabriel:**
 # How to interpret that there are, sort of, two different paths with slightly
 # different temperatures?
+'''REPLY:
+Replied bellow, this is realated to the connectivity between the injection and
+production well.
+'''
 
 fig, ax = plt.subplots()
 ax.scatter(years, data_obs, label="Observed", color="red", zorder=10)
