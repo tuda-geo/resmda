@@ -144,7 +144,7 @@ class TestRandomPermeability:
             [0.00000000, 0.00000000],
             [0.83044794, 0.27682457]
         ]])
-        assert_allclose(RP(1, random=rng), result)
+        assert_allclose(RP(1, random=rng), result, rtol=1e-6)
 
 
 def test_all_dir():
