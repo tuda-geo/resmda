@@ -2,9 +2,11 @@ r"""
 Localization
 ==========================
 
-This example follows contextually :ref:`sphx_glr_gallery_basicreservoir.py`,
-but uses several well doublets and compares ES-MDA with and without
+Example using several well doublets and compares ES-MDA with and without
 localization.
+
+The example follows contextually :ref:`sphx_glr_gallery_basicreservoir.py`.
+
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -31,7 +33,7 @@ perm_mean = 3.0
 perm_min = 0.5
 perm_max = 5.0
 
-# ESMDA parameters
+# ES-MDA parameters
 ne = 100                  # Number of ensembles
 dt = np.zeros(10)+0.0001  # Time steps (could be irregular, e.g., increasing!)
 time = np.r_[0, np.cumsum(dt)]
@@ -55,8 +57,8 @@ wells = np.array([
 
 
 ###############################################################################
-# Create permeability maps for ESMDA
-# ----------------------------------
+# Create permeability maps for ES-MDA
+# -----------------------------------
 #
 # We will create a set of permeability maps that will serve as our initial
 # guess (prior). These maps are generated using a Gaussian random field and are

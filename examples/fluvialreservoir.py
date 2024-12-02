@@ -1,12 +1,13 @@
 r"""
-2D Fluvial Reservoir ESMDA example
-==================================
+2D Fluvial Reservoir ES-MDA example
+===================================
 
-In contrast to the basic reservoir example
-:ref:`sphx_glr_gallery_basicreservoir.py`, where a single facies was used, this
-example uses fluvial models containing different facies. It also compares the
-use of ES-MDA with and without localization, as explained in the example
-:ref:`sphx_glr_gallery_localization.py`.
+This example uses fluvial models containing different facies.
+
+This in contrast to the basic reservoir example
+:ref:`sphx_glr_gallery_basicreservoir.py`, where a single facies was used. The
+example also compares the use of ES-MDA with and without localization, as
+explained in the example :ref:`sphx_glr_gallery_localization.py`.
 
 The fluvial models were generated with ``FLUVSIM`` through ``geomodpy``, for
 more information see towards the end of the example where the code is shown to
@@ -27,7 +28,6 @@ reproduce the facies.
         conda install -c conda-forge pooch
 
 """
-import os
 import json
 
 import pooch
@@ -40,23 +40,22 @@ import resmda
 # seed. For production, remove the seed!
 rng = np.random.default_rng(1513)
 
-# Adjust this path to a folder of your choice.
-data_path = os.path.join("..", "download", "")
-
 # sphinx_gallery_thumbnail_number = 3
 
 ###############################################################################
 # Load and plot the facies
 # ------------------------
 
-fname = "facies.npy"
-pooch.retrieve(
-    "https://raw.github.com/tuda-geo/data/2024-06-18/resmda/"+fname,
+folder = "data"
+ffacies = "facies.npy"
+finput = "facies.json"
+fpfacies = pooch.retrieve(
+    "https://raw.github.com/tuda-geo/data/2024-06-18/resmda/"+ffacies,
     "4bfe56c836bf17ca63453c37e5da91cb97bbef8cc6c08d605f70bd64fe7488b2",
-    fname=fname,
-    path=data_path,
+    fname=ffacies,
+    path=folder,
 )
-facies = np.load(data_path + fname)
+facies = np.load(fpfacies)
 ne, nx, ny = facies.shape
 
 # Define mean permeability per facies
@@ -363,13 +362,13 @@ for i, txt in enumerate(["No l", "L"]):
 #         facies[i*nreal:(i+1)*nreal, ...] = realizations.astype("i4")
 #
 #
-#     # ==== Save the output ====
+#     # ==== Save the outputs ====
 #
 #     # Save the input parameters to FLUVSIM as a json.
 #     with open("facies.json", "w") as f:
 #         json.dump(all_params, f, indent=2)
 #     # Save the facies values as a compressed npy-file.
-#     np.save("facies", facies.squeeze(), allow_pickle=False)
+#     np.save("facies.npy", facies.squeeze(), allow_pickle=False)
 
 
 ###############################################################################
@@ -379,14 +378,13 @@ for i, txt in enumerate(["No l", "L"]):
 # These are, just as the data themselves, online at
 # https://github.com/tuda-geo/data/resmda.
 
-fname = "facies.json"
-pooch.retrieve(
-    "https://raw.github.com/tuda-geo/data/2024-06-18/resmda/"+fname,
+fpinput = pooch.retrieve(
+    "https://raw.github.com/tuda-geo/data/2024-06-18/resmda/"+finput,
     "db2cb8a620775c68374c24a4fa811f6350381c7fc98a823b9571136d307540b4",
-    fname=fname,
-    path=data_path,
+    fname=finput,
+    path=folder,
 )
-with open(data_path + fname, "r") as f:
+with open(fpinput, "r") as f:
     print(json.dumps(json.load(f), indent=2))
 
 ###############################################################################

@@ -189,6 +189,6 @@ class Report(ScoobyReport):
     def __init__(self, **kwargs):
         """Initiate a scooby.Report instance."""
         kwargs = {'ncol': 3, **kwargs}
-        kwargs['core'] = ['numpy', 'scipy', 'numba', 'resmda']
+        kwargs['core'] = ['resmda', 'numpy', 'scipy']
         kwargs['optional'] = ['matplotlib', 'IPython']
         super().__init__(**kwargs)
