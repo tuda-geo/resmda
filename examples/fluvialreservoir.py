@@ -1,6 +1,6 @@
 r"""
-2D Fluvial Reservoir ESMDA example
-==================================
+2D Fluvial Reservoir ES-MDA example
+===================================
 
 This example uses fluvial models containing different facies.
 

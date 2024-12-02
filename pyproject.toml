@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "resmda"
-description = "A simple 2D reservoir modeller plus ESMDA"
+description = "ES-MDA with a simple 2D reservoir modeller"
 readme = "README.rst"
 requires-python = ">=3.10"
 authors = [
@@ -18,7 +18,7 @@ dependencies = [
     "scooby",
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python",
 ]

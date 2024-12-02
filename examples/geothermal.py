@@ -13,7 +13,7 @@ integrates the `Delft Advanced Research Terra Simulator (DARTS)
 variations on temperature over a 30-year period. The example uses a channelized
 permeability field, which provides an interesting case study of ES-MDA's
 behavior with non-Gaussian geological features. Since ES-MDA operates under
-Gaussian assumptions, it tends to create "blurry" updates to the permeability
+Gaussian assumptions, it tends to create smooth updates to the permeability
 field rather than maintaining sharp channel boundaries. This limitation becomes
 particularly visible when the algorithm identifies the need for connectivity
 between wells - instead of creating or modifying channels, it increases

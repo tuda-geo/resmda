@@ -1,6 +1,6 @@
 r"""
-2D Reservoir ESMDA example
-==========================
+2D Reservoir ES-MDA example
+===========================
 
 Ensemble Smoother Multiple Data Assimilation (ES-MDA) in Reservoir Simulation.
 
@@ -30,7 +30,7 @@ perm_mean = 3.0
 perm_min = 0.5
 perm_max = 5.0
 
-# ESMDA parameters
+# ES-MDA parameters
 ne = 100                  # Number of ensembles
 dt = np.zeros(10)+0.0001  # Time steps (could be irregular, e.g., increasing!)
 time = np.r_[0, np.cumsum(dt)]
@@ -47,8 +47,8 @@ wells = None
 
 
 ###############################################################################
-# Create permeability maps for ESMDA
-# ----------------------------------
+# Create permeability maps for ES-MDA
+# -----------------------------------
 #
 # We will create a set of permeability maps that will serve as our initial
 # guess (prior). These maps are generated using a Gaussian random field and are
@@ -109,8 +109,8 @@ ax.set_ylabel("Pressure (bar)")
 
 
 ###############################################################################
-# ESMDA
-# -----
+# ES-MDA
+# ------
 
 
 def restrict_permeability(x):
@@ -134,7 +134,7 @@ perm_post, data_post = resmda.esmda(
 # Posterior Analysis
 # ------------------
 #
-# After running ESMDA, it's crucial to analyze the posterior ensemble of
+# After running ES-MDA, it's crucial to analyze the posterior ensemble of
 # models. Here, we visualize the first three realizations from both the prior
 # and posterior ensembles to see how the models have been updated.
 
@@ -153,7 +153,7 @@ fig.colorbar(im, ax=ax, label="Log of Permeability (mD)",
 # Observing the monitored pressure at cell (1,1) for all realizations and the
 # reference case, we can see that the ensemble of models after the assimilation
 # steps (in blue) is closer to the reference case (in red) than the prior
-# ensemble (in gray). This indicates that the ESMDA method is effectively
+# ensemble (in gray). This indicates that the ES-MDA method is effectively
 # updating the models to better represent the observed data.
 
 
