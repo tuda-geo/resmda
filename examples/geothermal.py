@@ -1,22 +1,32 @@
-#%%
 r"""
 Geothermal Case Study
 =====================
 
-This example demonstrates the application of the Ensemble Smoother with Multiple Data Assimilation (ES-MDA) using the resmda library to predict temperature at a production well in a geothermal reservoir.
-The script integrates with the DARTS simulator to model the impact of permeability variations on temperature over a 30-year period.
-The example uses a channelized permeability field, which provides an interesting case study of ES-MDA's behavior with non-Gaussian geological features. 
-Since ES-MDA operates under Gaussian assumptions, it tends to create "blurry" updates to the permeability field rather than maintaining sharp channel boundaries. 
-This limitation becomes particularly visible when the algorithm identifies the need for connectivity between wells - instead of creating or modifying channels, it increases permeability in a more diffuse manner. This behavior highlights both the power of ES-MDA in matching production data and its limitations in preserving complex geological features.
+ES-MDA example predicting temperature at a production well as a function of
+permeability.
 
-**TODO Gabriel:**
-Some introduction about what this example is and what it shows. DONE
+This example demonstrates the application of the Ensemble Smoother with
+Multiple Data Assimilation (ES-MDA) using the ``resmda`` library to predict
+temperature at a production well in a geothermal reservoir. The notebook
+integrates the `Delft Advanced Research Terra Simulator (DARTS)
+<https://darts.citg.tudelft.nl>`_ to model the impact of permeability
+variations on temperature over a 30-year period. The example uses a channelized
+permeability field, which provides an interesting case study of ES-MDA's
+behavior with non-Gaussian geological features. Since ES-MDA operates under
+Gaussian assumptions, it tends to create "blurry" updates to the permeability
+field rather than maintaining sharp channel boundaries. This limitation becomes
+particularly visible when the algorithm identifies the need for connectivity
+between wells - instead of creating or modifying channels, it increases
+permeability in a more diffuse manner. This behavior highlights both the power
+of ES-MDA in matching production data and its limitations in preserving complex
+geological features.
 
 
 .. tip::
 
-    This example shows how you can use ``resmda`` with any external modelling
-    code, here with ``darts``.
+    This example can serve as an example how one can use ``resmda`` with any
+    external modelling code, here with the *Delft Advanced Research Terra
+    Simulator* (DARTS).
 
     **Thanks to Mona Devos, who provided the initial version of this example!**
 
@@ -24,21 +34,20 @@ Some introduction about what this example is and what it shows. DONE
 Pre-computed data
 -----------------
 
-Darts computation
+DARTS computation
 '''''''''''''''''
 
-The `Darts <https://pypi.org/project/open-darts/>`_-computation in this example
-takes too long for it to be run automatically on GitHub with every commit for
-the documentation (CI). Therefore, the results are precomputed, and we use that
-output here to show the results. Change the flag ``compute_darts`` from
-``False`` to ``True`` to actually compute the results. The pre-computed results
-were generated with the following versions (taking roughly 4h on a single
-thread):
+The DARTS computation in this example takes too long for it to be run
+automatically on GitHub with every commit for the documentation (CI). We
+therefore pre-computed the results locally to show them here. You can change
+the flag ``compute_darts`` from ``False`` to ``True`` to actually compute the
+results with DARTS yourself. The pre-computed results were generated with the
+following versions (taking roughly 4 h on a single thread):
 
-- ``open-darts==1.1.4``
-- ``Python==3.10.15``
-- ``numpy==2.0.2``
-- ``scipy==1.14.1``
+- open-darts: 1.1.4
+- Python: 3.10.15
+- NumPy: 2.0.2
+- SciPy: 1.14.1
 
 
 Fluvial models
@@ -51,7 +60,8 @@ reproduce the facies.
 
 .. important::
 
-    To retrieve the pre-computed data, you need to have ``pooch`` installed:
+    To retrieve the pre-computed data (for both DARTS and the facies), you need
+    to have ``pooch`` installed:
 
     .. code-block:: bash
 
@@ -105,7 +115,7 @@ fpfacies = pooch.retrieve(
 )
 facies = np.load(fpfacies)
 
-# Load pre-computed Darts result; only needed if `compute_darts` is `False`.
+# Load pre-computed DARTS result; only needed if `compute_darts=False`.
 if not compute_darts:
     fpdarts = pooch.retrieve(
         "https://raw.github.com/tuda-geo/data/2024-11-30/resmda/"+fdarts,
@@ -122,29 +132,12 @@ if not compute_darts:
 #
 # Here we define some model parameters. Important: These have obviously to
 # agree with the facies you computed!
-#
-# **TODO Gabriel:**
-# nz is set to 3 - is it one layer above and below our actual layer?
-'''REPLY:
-The model has  actual 3 layers, all of them are 30m thick and all are perforated. It happens in the
-code bellow:
-# Add well
-self.reservoir.add_well("PRD")
-for k in range(1, self.reservoir.nz):
-    self.reservoir.add_perforation(
-        "PRD",
-        cell_index=(self.iw[1], self.jw[1], k + 1),
-        well_radius=0.16,
-        multi_segment=True,
-    )
 
-'''
 # Model parameters
-nx, ny = 60, 60
-nz = 3
-dx, dy, dz = 30, 30, 30
-ne = 100
-years = np.arange(31)  # Time: we are modelling 30 years:
+nx, ny, nz = 60, 60, 3   # 60 x 60 x 3 cells
+dx, dy, dz = 30, 30, 30  # Each cell is a voxel of 30 x 30 x 30 meter
+ne = 100                 # 100 ensembles
+years = np.arange(31)    # Time: we are modelling 30 years:
 
 # Well locations
 iw = [30, 30]
@@ -158,6 +151,8 @@ perm_max = 200.
 perm = np.zeros(facies.shape)
 perm[facies == 0] = perm_min  # outside channels minimum
 perm[facies > 0] = perm_max   # inside channels maximum
+
+# We use a model with 3 layers, starting all with the same permeability.
 perm = np.stack([perm]*nz, axis=-1)  # 3x the same
 
 # Assign true permeability (first) and prior permeability
@@ -166,97 +161,81 @@ perm_prior = perm[1:, :, :, :]
 
 
 ###############################################################################
-# Prior permeabilities
-# --------------------
-# Plot the first 12 prior permeability models; grey shows the channels with
-# higher permeability.
+# Plot "true" model
+# -----------------
 #
-# **TODO Gabriel:**
-# It probably would be good to plot the wells in the permeability plots, right?
-# In the darts model, are those cell indices for the wells? Can you add some
-# symbols here for the wells?
-'''REPLY:
-Yes, I will plot it. As in the code from previous reply you can check that
-it is index - we have well perforated from the first layer to the third one.
+# The true permeability model is the one facies realization we use to create
+# observations by adding noise to the modelled data. These observations are
+# what we try to match with ES-MDA. To look at this permeability field is
+# important to later interpret the result. In particular, we see that there is
+# a channel of high permeability connecting the injection with the production
+# well.
 
-However, I will plot after the declare the wells in the darts model.
-'''
-
-fopts = {"sharex": True, "sharey": True, "constrained_layout": True, "figsize": (12, 8), "dpi": 100}
+fopts = {"sharex": True, "sharey": True, "constrained_layout": True}
 popts = {"vmin": perm_min, "vmax": perm_max, "origin": "lower"}
 
-fig, axs = plt.subplots(3, 4, figsize=fopts['figsize'], dpi=fopts['dpi'], 
-                        sharex=True, sharey=True)
-axs = axs.ravel()
+fig, ax = plt.subplots(figsize=(5, 4), **fopts)
 
-fig.suptitle("Prior Permeabilities", fontsize=14, y=0.95)
+# Permeabilities
+im = ax.imshow(perm_true[0, :, :, 0], **popts)
 
-for i in range(min(ne, 12)):
-    im = axs[i].imshow(perm_prior[i, :, :, 0], **popts)
-    
-    if i == 0:
-        axs[i].plot(jw[0], iw[0], '^', color='blue', markersize=10, 
-                    markeredgecolor='white', label='Injection well')
-        axs[i].plot(jw[1], iw[1], '^', color='red', markersize=10, 
-                    markeredgecolor='white', label='Production well')
-    else:
-        axs[i].plot(jw[0], iw[0], '^', color='blue', markersize=10, 
-                    markeredgecolor='white')
-        axs[i].plot(jw[1], iw[1], '^', color='red', markersize=10, 
-                    markeredgecolor='white')
-    
-    axs[i].set_title(f'Realization {i+1}', fontsize=10)
-    
-    axs[i].set_xticks([])
-    axs[i].set_yticks([])
-    axs[i].grid(False)
-    
-    if i % 4 == 0:
-        axs[i].set_ylabel('Y Grid Cell', fontsize=10)
-    
-    if i >= 8:
-        axs[i].set_xlabel('X Grid Cell', fontsize=10)
+# Wells
+ax.plot(jw[0], iw[0], "v", c="b", ms=10, mec="w")
+ax.plot(jw[1], iw[1], "^", c="r", ms=10, mec="w")
 
-cbar_ax = fig.add_axes([0.15, 0.05, 0.7, 0.02])
-cbar = fig.colorbar(im, cax=cbar_ax, orientation='horizontal', 
-                   label='Log Permeability (mD)')
-cbar.ax.tick_params(labelsize=9)
+# Labels and colour bar
+ax.set_ylabel("Y Grid Cell")
+ax.set_xlabel("X Grid Cell")
+fig.suptitle(
+    "«True» Permeabilities (blue: injection, red: production well)"
+)
+cbar = fig.colorbar(im, ax=ax, label="Permeability (mD)")
 
-legend_ax = fig.add_axes([0.02, 0.95, 0.2, 0.05])
-legend_ax.axis('off')
-
-handles, labels = axs[0].get_legend_handles_labels()
-legend = legend_ax.legend(handles, labels, 
-                         loc='center',
-                         ncol=2,
-                         frameon=True,
-                         fontsize=10,
-                         borderaxespad=0)
-legend.get_frame().set_facecolor('white')
-legend.get_frame().set_alpha(0.8)
-
-plt.subplots_adjust(top=0.9, bottom=0.1, right=0.95, left=0.05)
-
-#%%
 
 ###############################################################################
-# Darts-related functionalities
+# Prior permeabilities
+# --------------------
+# Plot the first 12 prior permeability models; yellow shows the channels with
+# higher permeability.
+
+fig, axs = plt.subplots(3, 4, **fopts)
+
+for i, ax in enumerate(axs.ravel()):
+    ax.set_title(f"Realization {i+1}")
+
+    # Permeabilities
+    im = ax.imshow(perm_prior[i, :, :, 0], **popts)
+
+    # Wells
+    ax.plot(jw[0], iw[0], "v", c="b", ms=10, mec="w")
+    ax.plot(jw[1], iw[1], "^", c="r", ms=10, mec="w")
+
+# Labels and colour bar
+fig.supylabel("Y Grid Cell")
+fig.supxlabel("X Grid Cell")
+fig.suptitle(
+    "Prior Permeabilities with injection (blue) and production (red) wells"
+)
+cbar = fig.colorbar(im, ax=axs.ravel(), label="Permeability (mD)")
+
+
+###############################################################################
+# DARTS-related functionalities
 # -----------------------------
 #
-# Custom Darts Model class
+# Custom DARTS Model class
 # ''''''''''''''''''''''''
 #
-# In the custom ``Model`` class for Darts we define some fixed parameters
+# In the custom ``Model`` class for DARTS we define some fixed parameters
 # specific to this example.
-
-
 
 if compute_darts:
 
     class Model(DartsModel):
         """Custom DartsModel Class."""
 
-        def __init__(self, perm, n_points=128, dx=dx, dy=dy, dz=dz, iw=iw, jw=jw):
+        def __init__(self, perm, n_points=128, dx=dx, dy=dy, dz=dz,
+                     iw=iw, jw=jw):
             """Initialize a new DartsModel instance."""
             super().__init__()
 
@@ -367,22 +346,22 @@ if compute_darts:
 # DARTS simulation function
 # '''''''''''''''''''''''''
 #
-# A ``simulation`` function (a wrapper for your model) is what you have to
-# build to use ``resmda``. This example for Darts can serve as a blueprint for
-# your own project. The function has to
+# In order to use an external code with ``resmda``, you have to write a wrapper
+# function, which
 #
-# - take an ndarray of the shape of the prior models ``(ne, ...)``, and
-# - return an ndarray of the shape of the prior data ``(ne, nd)``;
+# - takes an ndarray of the shape of the prior models ``(ne, ...)``, and
+# - returns an ndarray of the shape of the prior data ``(ne, nd)``;
 #
 # ``ne`` is the number of ensembles, ``nd`` the number of data.
 #
-# In this case using Darts, the function ``temperature_at_production_well``
-# takes permeability fields, and returns temperature (K) at production well.
+# In this case using DARTS, the wrapper function is called
+# ``temperature_at_production_well`` and takes permeability fields as input,
+# and returns temperature (K) at production well as output.
 
 if compute_darts:
 
     def temperature_at_production_well(permeabilities, years=years):
-        """Darts function prediction temperature at production well."""
+        """DARTS function predicting temperature at production well."""
 
         # Pre-allocate output
         temperature = np.zeros((permeabilities.shape[0], years.size))
@@ -390,20 +369,21 @@ if compute_darts:
         # Loop over permeability fields
         for i, perm in enumerate(permeabilities):
 
-            # Initialize a Darts model for this permeability field
+            # Initialize a DARTS model for this permeability field
             m = Model(perm=perm)
             m.init()
             m.run(1e-3)
 
             # Run and store every year;
-            # (in future Darts versions the loop won't be needed).
+            # (in future DARTS versions the loop won't be needed).
             for y in years[1:]:
                 m.run(365, restart_dt=365)
 
             # Store temperature
-            # (Sometimes the first time step is cut and then repeated in the
-            #  time_data; if you can change the time_data to not report cut
-            #  timesteps, then this may not be necessary.)
+            # (Only taking the last nt samples, because sometimes the first
+            # time step is cut and then repeated in the time_data; if you can
+            # change the time_data to not report cut time-steps, then this may
+            # not be necessary.)
             temperature[i, :] = np.array(
                 m.physics.engine.time_data["PRD : temperature (K)"]
             )[-years.size:]
@@ -415,7 +395,7 @@ if compute_darts:
 # Simulate prior data
 # -------------------
 #
-# Here we simulate *true* and prior data, and create *observed* data from
+# Here we simulate "true" and prior data, and create "observed" data from
 # adding random noise to the true data.
 
 if compute_darts:
@@ -429,26 +409,25 @@ else:
     data_prior = pc_darts["data_prior"].astype("d")
     data_obs = pc_darts["data_obs"].astype("d")
 
+k2c = -273.15  # To plot °C instead of K
+
 
 ###############################################################################
 # Plot prior data
 # '''''''''''''''
 #
-# **TODO Gabriel:**
-# How to interpret that there are, sort of, two different paths with slightly
-# different temperatures?
-'''REPLY:
-Replied bellow, this is realated to the connectivity between the injection and
-production well.
-'''
+# The prior data show that there seem to be two possible clusters, one having
+# slightly higher temperatures than the other. The slightly colder cluster
+# corresponds to the models that have a connecting channel, the slightly warmer
+# cluster the models that have no connecting channel.
 
 fig, ax = plt.subplots()
-ax.scatter(years, data_obs, label="Observed", color="red", zorder=10)
-ax.plot(years, data_prior.T, color="grey", alpha=0.4,
+ax.scatter(years, data_obs+k2c, label="Observed", c="r", zorder=10)
+ax.plot(years, data_prior.T+k2c, c="grey", alpha=0.4,
         label=["Prior"] + [None] * (ne - 1))
 ax.legend()
 ax.set_xlabel("Time (years)")
-ax.set_ylabel("Temperature (K)")
+ax.set_ylabel("Temperature (°C)")
 ax.set_title("Temperature at Production Well")
 
 
@@ -494,52 +473,72 @@ else:
 # Plot posterior data
 # '''''''''''''''''''
 #
-# **TODO Gabriel:**
-# How to interpret that "the colder path" won?
-'''REPLY:
-We can interpret that models that connect the injection and production well with 
-higher permeability are the ones which match data better.
-
-Even when we originally didn't have channels between the injection and production
-well, the model found that the best way to match data is to increase a lot the permeability, 
-actually this is really nice. .
-'''
+# Models that connect the injection and production well with higher
+# permeability (lower temperature) are the ones which match the data better.
+# Even when we originally did not have channels between the injection and
+# production well, the model found that the best way to match the data is to
+# increase the permeability between the wells.
 
 fig, ax = plt.subplots()
-ax.scatter(years, data_obs, label="Observed", color="red", zorder=10)
-ax.plot(years, data_prior.T, color="grey", alpha=0.4,
+ax.scatter(years, data_obs+k2c, label="Observed", c="r", zorder=10)
+ax.plot(years, data_prior.T+k2c, c="grey", alpha=0.4,
         label=["Prior"] + [None] * (ne - 1))
-ax.plot(years, data_post.T, color="blue",
+ax.plot(years, data_post.T+k2c, c="b",
         label=["Posterior"] + [None] * (ne - 1))
 ax.legend()
 ax.set_xlabel("Time (years)")
-ax.set_ylabel("Temperature (K)")
+ax.set_ylabel("Temperature (°C)")
 ax.set_title("Temperature at Production Well")
+
 
 ###############################################################################
 # Plot posterior permeabilities
 # '''''''''''''''''''''''''''''
+#
 # Plot the first 12 posterior permeability models.
 #
-# **TODO Gabriel:**
-# Is it insightful to show the posterior permeability?
-'''REPLY:
-Definitely, it is insightful to show the posterior permeability
-because it shows that besides we match data we still have different realizations
-this means we still have uncertainty in the model. Besides, it shows that 
-the ensemble is not colapsed to a single model.
-'''
-
+# The data is matched nicely (above figure), yet we still have different
+# realizations, meaning that the posterior does not look like the "true" model,
+# as expected (ill-posed problem). This means that we still have uncertainty in
+# the model, and also that the ensemble has not collapsed to a single model.
 
 fig, axs = plt.subplots(3, 4, **fopts)
 axs = axs.ravel()
-fig.suptitle("Posterior Permeabilities")
 for i in range(min(ne, 12)):
     im = axs[i].imshow(perm_post[i, :, :, 0], **popts)
-    axs[i].plot(jw[0], iw[0], '^', color='blue', markersize=10, markeredgecolor='white')
-    axs[i].plot(jw[1], iw[1], '^', color='red', markersize=10, markeredgecolor='white')
-fig.colorbar(im, ax=axs, label="Log Permeability (mD)")
+    axs[i].plot(jw[0], iw[0], "v", c="b", ms=10, mec="w")
+    axs[i].plot(jw[1], iw[1], "^", c="r", ms=10, mec="w")
+fig.colorbar(im, ax=axs, label="Permeability (mD)")
+fig.suptitle(
+    "Posterior Permeabilities with injection (blue) and production (red) wells"
+)
+fig.supylabel("Y Grid Cell")
+fig.supxlabel("X Grid Cell")
 
+
+###############################################################################
+# Plot permeability differences
+# '''''''''''''''''''''''''''''
+#
+# The difference between prior and posterior shows nicely that in models, where
+# there is a channel between the injection and production well, not much had to
+# change in terms of permeability to predict the data. In models, however,
+# where there is no connecting channel, it increased significantly the
+# permeability between the wells, and decreased them further out.
+
+popts = {"vmin": -100, "vmax": 100, "origin": "lower", "cmap": "RdBu"}
+fig, axs = plt.subplots(3, 4, **fopts)
+axs = axs.ravel()
+for i in range(min(ne, 12)):
+    im = axs[i].imshow(perm_post[i, :, :, 0] - perm_prior[i, :, :, 0], **popts)
+    axs[i].plot(jw[0], iw[0], "v", c="k", ms=10, mec="w")
+    axs[i].plot(jw[1], iw[1], "^", c="w", ms=10, mec="k")
+fig.colorbar(im, ax=axs, label="Permeability difference (mD)")
+fig.suptitle(
+    "Permeability differences (black injection, white production well)"
+)
+fig.supylabel("Y Grid Cell")
+fig.supxlabel("X Grid Cell")
 
 ###############################################################################
 # Reproduce the facies
