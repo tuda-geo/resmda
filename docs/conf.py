@@ -78,7 +78,7 @@ master_doc = "index"
 # General information about the project.
 project = "resmda"
 author = "D. Werthmüller, G. Serrao Seabra, F.C. Vossepoel"
-copyright = f"2024-{time.strftime("%Y")}, {author}"
+copyright = f"2024-{time.strftime('%Y')}, {author}"
 
 # |version| and |today| tags (|release|-tag is not used).
 version = __version__
