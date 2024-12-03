@@ -1,0 +1,6 @@
+esmda
+=====
+
+.. currentmodule:: resmda.data_assimilation
+
+.. autofunction:: esmda

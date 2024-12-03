@@ -1,0 +1,6 @@
+rng
+===
+
+.. currentmodule:: resmda.utils
+
+.. autofunction:: rng

@@ -1,0 +1,6 @@
+gaussian_covariance
+===================
+
+.. currentmodule:: resmda.utils
+
+.. autofunction:: gaussian_covariance

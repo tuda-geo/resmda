@@ -1,0 +1,7 @@
+Report
+======
+
+.. currentmodule:: resmda.utils
+
+.. autoclass:: Report
+   :show-inheritance:
