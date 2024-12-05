@@ -31,6 +31,8 @@ bibliography: paper.bib
 
 Data Assimilation (DA) combines computer models with real-world measurements to improve predictions. The `resmda` package implements the Ensemble Smoother with Multiple Data Assimilation (ES-MDA) method in Python, providing tools for reservoir engineering applications. The package includes localization for refined updates, gaussian random field generation for realistic permeability modeling, and integration capabilities with external simulators. At its core, `resmda` features an educational 2D single-phase reservoir simulator that models pressure changes and well behavior, making it valuable for both research and teaching.
 
+Cite [@esmda]
+
 The package also includes a educational 2D single phase reservoir simulator, which models pressure changes over time, and well behavior for both injection and production scenarios. This simulator is particularly useful for educational purposes, providing a practical platform for students and researchers to learn and experiment with data assimilation concepts. The software is well-documented, with extensive examples that guide users through learning ES-MDA concepts, testing new ideas, and applying methods to real-world problems. This makes `resmda` a resource for researchers, students, and practitioners in geoscience and reservoir engineering who need to understand and apply data assimilation techniques.
 
 # Statement of Need
@@ -52,6 +54,8 @@ A key feature of `resmda` is its ability to integrate with external simulators. 
 
 The software implements several features to enhance its functionality. These include localization techniques for parameter updates, gaussian random field generation for realistic permeability modeling, .... INCLUDE HERE MORE FEATURES.
 
+Cite [@SciPy], [@NumPy]
+
 # Research Applications
 
 The software has been used in several research projects, including reservoir characterization studies at TU Delft, integration with the DARTS simulator for geothermal applications, and educational workshops on data assimilation techniques. These applications highlight the software's versatility and its ability to address a wide range of challenges in reservoir engineering and geoscience.
@@ -65,5 +69,4 @@ While other ES-MDA implementations exist, such as pyesmda and esmda, `resmda` di
 This work was supported by the [Delphi Consortium](https://www.delphi-consortium.com). The authors thank Dr. D.V. Voskov for his insights on reservoir simulation implementation.
 
 # References
-
 
