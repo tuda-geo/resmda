@@ -21,7 +21,7 @@ affiliations:
    index: 1
  - name: ETH Zurich, CH
    index: 2
- - name: Petrobras, GABRIEL TODO, BR
+ - name: Petroleo Brasileiro S.A. (Petrobras), BR
    index: 3
 date: 31 December 2024
 bibliography: paper.bib
@@ -48,9 +48,9 @@ where $m_j^a$ represents the updated (analysis) parameters, $m_j^f$ the prior (f
 
 # Key Features
 
-A key feature of `resmda` is its ability to integrate with external simulators. A prime example is its integration with open-DARTS (open Delft Advanced Research Terra Simulator) [@voskov2024open], a state-of-the-art open-source reservoir simulation framework developed at TU Delft. This integration is documented in the package examples, showing how `resmda` can be used with industry-standard simulators while maintaining its user-friendly interface. 
+A key feature of `resmda` is its ability to integrate with external simulators. A prime example is its integration with open-DARTS (open Delft Advanced Research Terra Simulator) [@opendarts], a state-of-the-art open-source reservoir simulation framework developed at TU Delft. This integration is documented in the package examples, showing how `resmda` can be used with industry-standard simulators while maintaining its user-friendly interface.
 
-The software implements several features to enhance its functionality. These include localization techniques for parameter updates, gaussian random field generation for realistic permeability modeling, .... INCLUDE HERE MORE FEATURES.  
+The software implements several features to enhance its functionality. These include localization techniques for parameter updates, gaussian random field generation for realistic permeability modeling, .... INCLUDE HERE MORE FEATURES.
 
 # Research Applications
 
