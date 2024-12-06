@@ -18,18 +18,18 @@ parameter-estimation problem and thereby neglecting model uncertainties. Thus,
 unlike with the ensemble Kalman filter (EnKF), the parameters and states are
 always consistent (Thulin et al., 2007). This fact helps to explain the better
 data matches obtained by ESMDA compared to EnKF. The analyzed vector of model
-parameters :math:`m^a` is given in that case by
+parameters :math:`z^a` is given in that case by
 
 .. math::
-    m_j^a = m_j^f + C_\text{MD}^f \left(C_\text{DD}^f + \alpha C_\text{D}
+    z_j^a = z_j^f + C_\text{MD}^f \left(C_\text{DD}^f + \alpha C_\text{D}
    \right)^{-1}\left(d_{\text{uc},j} - d_j^f \right) \qquad \text{(1)}
 
 for ensembles :math:`j=1, 2, \dots, N_e`. Here,
 
 - :math:`^a`: analysis;
 - :math:`^f`: forecast;
-- :math:`m^f`: prior vector of model parameters (:math:`N_m`);
-- :math:`C_\text{MD}^f`: cross-covariance matrix between :math:`m^f` and
+- :math:`z^f`: prior vector of model parameters (:math:`N_m`);
+- :math:`C_\text{MD}^f`: cross-covariance matrix between :math:`z^f` and
   :math:`d^f` (:math:`N_m \times N_d`);
 - :math:`C_\text{DD}^f`:  auto-covariance matrix of predicted data
   (:math:`N_d \times N_d`);
@@ -40,10 +40,10 @@ for ensembles :math:`j=1, 2, \dots, N_e`. Here,
   vector of observed data, :math:`d_\text{obs}` (:math:`N_d`);
 - :math:`d^f`: vector of predicted data (:math:`N_d`).
 
-The prior vector of model parameters, :math:`m^f_j`, can in reality be
-:math:`j` possible models :math:`m^f` given from an analyst (e.g., the
+The prior vector of model parameters, :math:`z^f_j`, can in reality be
+:math:`j` possible models :math:`z^f` given from an analyst (e.g., the
 geologist). In theoretical tests, these are usually created by perturbing the
-prior :math:`m^f` by, e.g., adding random Gaussian noise.
+prior :math:`z^f` by, e.g., adding random Gaussian noise.
 
 The ESMDA algorithm follows [EmRe13]_:
 
