@@ -19,6 +19,8 @@ from resmda.utils import localization_matrix, Report
 from resmda.data_assimilation import esmda
 from resmda.reservoir_simulator import Simulator, RandomPermeability
 
+print("Warning: `resmda` will change its name to `dageo`.")
+print("         Install `dageo` to get the newest version.")
 
 # Initialize a random number generator.
 rng = utils.rng()
