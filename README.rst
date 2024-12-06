@@ -15,3 +15,5 @@ future.
 Available through pip and conda:
 ``pip install dageo`` / ``conda install -c conda-forge dageo``.
 
+
+(Note that until v1.0.2, ``dageo`` was called ``resmda``.)
