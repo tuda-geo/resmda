@@ -9,7 +9,7 @@ API reference
 
 ----
 
-.. module:: resmda
+.. module:: dageo
 
 
 .. toctree::

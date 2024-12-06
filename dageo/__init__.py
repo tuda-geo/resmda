@@ -1,6 +1,6 @@
 # Copyright 2024 D. Werthmüller, G. Serrao Seabra, F.C. Vossepoel
 #
-# This file is part of resmda.
+# This file is part of dageo.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License.  You may obtain a copy
@@ -14,13 +14,10 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-from resmda import utils
-from resmda.utils import localization_matrix, Report
-from resmda.data_assimilation import esmda
-from resmda.reservoir_simulator import Simulator, RandomPermeability
-
-print("Warning: `resmda` will change its name to `dageo`.")
-print("         Install `dageo` to get the newest version.")
+from dageo import utils
+from dageo.utils import localization_matrix, Report
+from dageo.data_assimilation import esmda
+from dageo.reservoir_simulator import Simulator, RandomPermeability
 
 # Initialize a random number generator.
 rng = utils.rng()

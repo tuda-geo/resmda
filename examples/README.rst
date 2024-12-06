@@ -1,4 +1,4 @@
-.. _resmda_gallery:
+.. _dageo_gallery:
 
 =======
 Gallery

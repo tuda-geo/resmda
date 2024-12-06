@@ -1,6 +1,6 @@
 # Copyright 2024 D. Werthmüller, G. Serrao Seabra, F.C. Vossepoel
 #
-# This file is part of resmda.
+# This file is part of dageo.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License.  You may obtain a copy
@@ -16,7 +16,7 @@
 
 import numpy as np
 
-from resmda import utils
+from dageo import utils
 
 __all__ = ['esmda']
 
@@ -28,10 +28,10 @@ def __dir__():
 def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
           localization_matrix=None, callback_post=None, return_post_data=True,
           return_steps=False, random=None):
-    """ES-MDA algorithm ([EmRe13]_) with optional localization.
+    """ESMDA algorithm ([EmRe13]_) with optional localization.
 
     Consult the section :ref:`esmda` in the manual for the theory and more
-    information about ES-MDA.
+    information about ESMDA.
 
     Parameters
     ----------
@@ -48,20 +48,20 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
     sigma : {float, ndarray}
         Standard deviation(s) of the observation noise.
     alphas : {int, array-like}, default: 4
-        Inflation factors for ES-MDA.
+        Inflation factors for ESMDA.
     data_prior : ndarray, default: None
         Prior data ensemble, of shape ``(ne, nd)``.
     callback_post : function, default: None
-        Function to be executed after each ES-MDA iteration to the posterior
+        Function to be executed after each ESMDA iteration to the posterior
         model, ``callback_post(model_post)``.
     return_post_data : bool, default: True
         If true, returns also ``forward(model_post)``.
     return_steps : bool, default: False
-        If true, returns model and data of all ES-MDA steps. Setting
+        If true, returns model and data of all ESMDA steps. Setting
         ``return_steps`` to True enforces ``return_post_data=True``.
     random : {None, int,  np.random.Generator}, default: None
         Seed or random generator for reproducibility; see
-        :func:`resmda.utils.rng`.
+        :func:`dageo.utils.rng`.
     localization_matrix : {ndarray, None}, default: None
         If provided, apply localization to the Kalman gain matrix, of shape
         ``(model-shape, nd)``.
@@ -97,7 +97,7 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
 
     # Loop over alphas
     for i, alpha in enumerate(alphas):
-        print(f"ES-MDA step {i+1: 3d}; α={alpha}")
+        print(f"ESMDA step {i+1: 3d}; α={alpha}")
 
         # == Step (a) of Emerick & Reynolds, 2013 ==
         # Run the ensemble from time zero.

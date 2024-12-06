@@ -1,7 +1,7 @@
 # Command line options.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
-SPHINXPROJ    = resmda
+SPHINXPROJ    = dageo
 SOURCEDIR     = .
 BUILDDIR      = _build
 

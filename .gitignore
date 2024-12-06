@@ -3,7 +3,7 @@ __pycache__/
 
 # Sphinx
 docs/_build/
-docs/api/resmda*
+docs/api/dageo*
 docs/savefig/
 docs/gallery/*
 docs/sg_execution_times.rst
@@ -15,10 +15,10 @@ htmlcov
 .pytest_cache/
 
 # setuptools_scm
-resmda/version.py
+dageo/version.py
 
 # Build related
 .eggs/
 build/
 dist/
-resmda.egg-info/
+dageo.egg-info/

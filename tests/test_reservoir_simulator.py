@@ -2,8 +2,8 @@ import numpy as np
 import scipy as sp
 from numpy.testing import assert_allclose
 
-import resmda
-from resmda import reservoir_simulator
+import dageo
+from dageo import reservoir_simulator
 
 
 class TestSimulator:
@@ -127,7 +127,7 @@ class TestRandomPermeability:
         RP = reservoir_simulator.RandomPermeability(3, 2, 0.5, 0.2, 0.8)
         assert_allclose(
             RP.cov,
-            resmda.utils.gaussian_covariance(
+            dageo.utils.gaussian_covariance(
                 3, 2, RP.length, RP.theta, RP.variance
             ),
         )
@@ -138,7 +138,7 @@ class TestRandomPermeability:
         RP = reservoir_simulator.RandomPermeability(3, 2, 0.5, 0.0, 1.0)
         assert_allclose(RP(1, 0.5, 0.5, 0.5), 0.5)
 
-        rng = resmda.utils.rng(4)
+        rng = dageo.utils.rng(4)
         result = np.array([[
             [0.00000000, 0.29639514],
             [0.00000000, 0.00000000],

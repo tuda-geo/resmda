@@ -2,7 +2,7 @@ import scooby
 import numpy as np
 from numpy.testing import assert_allclose
 
-from resmda import utils
+from dageo import utils
 
 
 def test_gaussian_covariance():
@@ -78,7 +78,7 @@ def test_Report(capsys):
     # We just ensure the shown packages do not change (core and optional).
     out1 = utils.Report()
     out2 = scooby.Report(
-        core=['resmda', 'numpy', 'scipy'],
+        core=['dageo', 'numpy', 'scipy'],
         optional=['matplotlib', 'IPython'],
         ncol=3,
     )

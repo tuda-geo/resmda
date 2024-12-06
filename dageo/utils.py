@@ -1,6 +1,6 @@
 # Copyright 2024 D. Werthmüller, G. Serrao Seabra, F.C. Vossepoel
 #
-# This file is part of resmda.
+# This file is part of dageo.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License.  You may obtain a copy
@@ -21,7 +21,7 @@ import scipy as sp
 from scooby import Report as ScoobyReport
 
 try:
-    from resmda.version import version as __version__
+    from dageo.version import version as __version__
 except ImportError:
     __version__ = 'unknown-'+datetime.today().strftime('%Y%m%d')
 
@@ -189,6 +189,6 @@ class Report(ScoobyReport):
     def __init__(self, **kwargs):
         """Initiate a scooby.Report instance."""
         kwargs = {'ncol': 3, **kwargs}
-        kwargs['core'] = ['resmda', 'numpy', 'scipy']
+        kwargs['core'] = ['dageo', 'numpy', 'scipy']
         kwargs['optional'] = ['matplotlib', 'IPython']
         super().__init__(**kwargs)

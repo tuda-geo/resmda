@@ -1,12 +1,12 @@
-.. _resmda-manual:
+.. _dageo-manual:
 
-####################
-resmda Documentation
-####################
+###################
+dageo Documentation
+###################
 
 :Release: |version|
 :Date: |today|
-:Source: `github.com/tuda-geo/resmda <https://github.com/tuda-geo/resmda>`_
+:Source: `github.com/tuda-geo/dageo <https://github.com/tuda-geo/dageo>`_
 
 ----
 
@@ -47,13 +47,13 @@ resmda Documentation
         Gallery
         ^^^^^^^
 
-        The gallery contains examples on the usage of resmda, and is generally
+        The gallery contains examples on the usage of dageo, and is generally
         the best way to get started. Download them and modify them to your
         needs!
 
         +++
 
-        .. button-ref:: resmda_gallery
+        .. button-ref:: dageo_gallery
             :expand:
             :color: info
             :click-parent:
@@ -67,7 +67,7 @@ resmda Documentation
         API reference
         ^^^^^^^^^^^^^
 
-        The API reference of resmda includes almost every function and class.
+        The API reference of dageo includes almost every function and class.
         Some of the underlying theory is also described in the docstrings.
 
         +++

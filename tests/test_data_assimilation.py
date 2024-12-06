@@ -1,8 +1,8 @@
 import numpy as np
 from numpy.testing import assert_allclose
 
-import resmda
-from resmda import data_assimilation
+import dageo
+from dageo import data_assimilation
 
 
 def pseudopdf(data, bins=200, density=True, **kwargs):
@@ -22,11 +22,11 @@ def forward(x, beta):
 
 
 def test_esmda_linear():
-    # Use the simple linear ES-MDA example from the gallery as simple test.
+    # Use the simple linear ESMDA example from the gallery as simple test.
     xlocation = -1.0
     ne = int(1e7)
     obs_std = 1.0
-    rng = resmda.utils.rng(1234)  # fixed seed for testing
+    rng = dageo.utils.rng(1234)  # fixed seed for testing
     mprior = rng.normal(loc=1.0, scale=obs_std, size=(ne, 1))
 
     def lin_fwd(x):
@@ -36,7 +36,7 @@ def test_esmda_linear():
     l_dobs = lin_fwd(xlocation)
 
     # Only return final model and data
-    lm_post, ld_post = resmda.esmda(
+    lm_post, ld_post = dageo.esmda(
         model_prior=mprior,
         forward=lin_fwd,
         data_obs=l_dobs,
@@ -52,7 +52,7 @@ def test_esmda_linear():
     assert_allclose(0.012, x[np.argmax(p)], atol=0.001)
 
     # Also return steps
-    lm_post2, ld_post2 = resmda.esmda(
+    lm_post2, ld_post2 = dageo.esmda(
         model_prior=mprior,
         forward=lin_fwd,
         data_obs=l_dobs,
@@ -71,7 +71,7 @@ def test_esmda_linear():
         x[:] /= 100  # Gets the model much narrowed around 0.
 
     # alpha-array, localization_matrix, callback_post, return only model
-    lm_post3 = resmda.esmda(
+    lm_post3 = dageo.esmda(
         model_prior=mprior,
         forward=lin_fwd,
         data_obs=l_dobs,
