@@ -1,6 +1,6 @@
 # Copyright 2024 D. Werthmüller, G. Serrao Seabra, F.C. Vossepoel
 #
-# This file is part of resmda.
+# This file is part of dageo.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License.  You may obtain a copy
@@ -17,7 +17,7 @@
 import numpy as np
 import scipy as sp
 
-from resmda import utils
+from dageo import utils
 
 __all__ = ['Simulator', 'RandomPermeability']
 

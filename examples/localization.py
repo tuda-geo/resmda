@@ -2,7 +2,7 @@ r"""
 Localization
 ==========================
 
-Example using several well doublets and compares ES-MDA with and without
+Example using several well doublets and compares ESMDA with and without
 localization.
 
 The example follows contextually :ref:`sphx_glr_gallery_basicreservoir.py`.
@@ -11,7 +11,7 @@ The example follows contextually :ref:`sphx_glr_gallery_basicreservoir.py`.
 import numpy as np
 import matplotlib.pyplot as plt
 
-import resmda
+import dageo
 
 # For reproducibility, we instantiate a random number generator with a fixed
 # seed. For production, remove the seed!
@@ -33,7 +33,7 @@ perm_mean = 3.0
 perm_min = 0.5
 perm_max = 5.0
 
-# ES-MDA parameters
+# ESMDA parameters
 ne = 100                  # Number of ensembles
 dt = np.zeros(10)+0.0001  # Time steps (could be irregular, e.g., increasing!)
 time = np.r_[0, np.cumsum(dt)]
@@ -57,15 +57,15 @@ wells = np.array([
 
 
 ###############################################################################
-# Create permeability maps for ES-MDA
-# -----------------------------------
+# Create permeability maps for ESMDA
+# ----------------------------------
 #
 # We will create a set of permeability maps that will serve as our initial
 # guess (prior). These maps are generated using a Gaussian random field and are
 # constrained by certain statistical properties.
 
 # Get the model and ne prior models
-RP = resmda.RandomPermeability(nx, ny, perm_mean, perm_min, perm_max)
+RP = dageo.RandomPermeability(nx, ny, perm_mean, perm_min, perm_max)
 perm_true = RP(1, random=rng)
 perm_prior = RP(ne, random=rng)
 
@@ -75,7 +75,7 @@ perm_prior = RP(ne, random=rng)
 # -------------------------------------------
 
 # Instantiate reservoir simulator
-RS = resmda.Simulator(nx, ny, wells=wells)
+RS = dageo.Simulator(nx, ny, wells=wells)
 
 
 def sim(x):
@@ -98,7 +98,7 @@ data_obs[0, :3] = data_true[0, :3]
 nd_positions = np.tile(np.array([ox, oy]), time.size).T
 
 # Create matrix
-loc_mat = resmda.localization_matrix(RP.cov, nd_positions, (nx, ny))
+loc_mat = dageo.localization_matrix(RP.cov, nd_positions, (nx, ny))
 
 # QC localization matrix
 fig, ax = plt.subplots(1, 1, constrained_layout=True)
@@ -112,8 +112,8 @@ fig.colorbar(im, ax=ax, label="Localization Weight (-)")
 
 
 ###############################################################################
-# ES-MDA
-# ------
+# ESMDA
+# -----
 
 
 def restrict_permeability(x):
@@ -137,14 +137,14 @@ inp = {
 # Without localization
 # ''''''''''''''''''''
 
-nl_perm_post, nl_data_post = resmda.esmda(**inp)
+nl_perm_post, nl_data_post = dageo.esmda(**inp)
 
 
 ###############################################################################
 # With localization
 # '''''''''''''''''
 
-wl_perm_post, wl_data_post = resmda.esmda(**inp, localization_matrix=loc_mat)
+wl_perm_post, wl_data_post = dageo.esmda(**inp, localization_matrix=loc_mat)
 
 
 ###############################################################################
@@ -206,4 +206,4 @@ for i, txt in enumerate(["No l", "L"]):
 
 ###############################################################################
 
-resmda.Report()
+dageo.Report()

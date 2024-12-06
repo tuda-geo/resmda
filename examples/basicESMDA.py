@@ -1,8 +1,8 @@
 r"""
-Linear and non-linear ES-MDA examples
-=====================================
+Linear and non-linear ESMDA examples
+====================================
 
-A basic example of ES-MDA using a simple 1D equation.
+A basic example of ESMDA using a simple 1D equation.
 
 Geir Evensen gave a talk on *Properties of Iterative Ensemble Smoothers and
 Strategies for Conditioning on Production Data* at the IPAM in May 2017.
@@ -14,7 +14,7 @@ be found at:
 - Video can be found here:
   https://www.ipam.ucla.edu/programs/workshops/workshop-iii-data-assimilation-uncertainty-reduction-and-optimization-for-subsurface-flow/?tab=schedule
 
-Geir gives the ES-MDA equations as
+Geir gives the ESMDA equations as
 
 .. math::
     x_{j,i+1} &= x_{j,i} + (C^e_{xy})_i \left((C^e_{yy})_i +
@@ -33,7 +33,7 @@ which is a linear model if :math:`\beta=0`.
 import numpy as np
 import matplotlib.pyplot as plt
 
-import resmda
+import dageo
 
 # sphinx_gallery_thumbnail_number = 3
 
@@ -83,7 +83,7 @@ def plot_result(mpost, dpost, dobs, title, ylim):
 
     # Plot Likelihood
     ax2.plot(
-        *pseudopdf(resmda.rng.normal(dobs, size=(ne, dobs.size))),
+        *pseudopdf(dageo.rng.normal(dobs, size=(ne, dobs.size))),
         'C2', lw=2, label='Datum'
     )
 
@@ -115,8 +115,8 @@ def plot_result(mpost, dpost, dobs, title, ylim):
 # Linear case
 # -----------
 #
-# Prior model parameters and ES-MDA parameters
-# ''''''''''''''''''''''''''''''''''''''''''''
+# Prior model parameters and ESMDA parameters
+# '''''''''''''''''''''''''''''''''''''''''''
 #
 # In reality, the prior would be :math:`j` models provided by, e.g., the
 # geologists. Here we create $j$ realizations using a normal distribution of a
@@ -132,12 +132,12 @@ ne = int(1e7)
 obs_std = 1.0
 
 # Prior: Let's start with ones as our prior guess
-mprior = resmda.rng.normal(loc=1.0, scale=obs_std, size=(ne, 1))
+mprior = dageo.rng.normal(loc=1.0, scale=obs_std, size=(ne, 1))
 
 
 ###############################################################################
-# Run ES-MDA and plot
-# '''''''''''''''''''
+# Run ESMDA and plot
+# ''''''''''''''''''
 
 def lin_fwd(x):
     """Linear forward model."""
@@ -147,7 +147,7 @@ def lin_fwd(x):
 # Sample an "observation".
 l_dobs = lin_fwd(xlocation)
 
-lm_post, ld_post = resmda.esmda(
+lm_post, ld_post = dageo.esmda(
     model_prior=mprior,
     forward=lin_fwd,
     data_obs=l_dobs,
@@ -180,7 +180,7 @@ def nonlin_fwd(x):
 
 # Sample a nonlinear observation; the rest of the parameters remains the same.
 n_dobs = nonlin_fwd(xlocation)
-nm_post, nd_post = resmda.esmda(
+nm_post, nd_post = dageo.esmda(
     model_prior=mprior,
     forward=nonlin_fwd,
     data_obs=n_dobs,
@@ -203,4 +203,4 @@ plot_result(nm_post, nd_post, n_dobs, title='Nonlinear Case', ylim=[0, 0.7])
 
 ###############################################################################
 
-resmda.Report()
+dageo.Report()

@@ -2,29 +2,29 @@ r"""
 Geothermal Case Study
 =====================
 
-ES-MDA example predicting temperature at a production well as a function of
+ESMDA example predicting temperature at a production well as a function of
 permeability.
 
 This example demonstrates the application of the Ensemble Smoother with
-Multiple Data Assimilation (ES-MDA) using the ``resmda`` library to predict
+Multiple Data Assimilation (ESMDA) using the ``dageo`` library to predict
 temperature at a production well in a geothermal reservoir. The notebook
 integrates the `Delft Advanced Research Terra Simulator (DARTS)
 <https://darts.citg.tudelft.nl>`_ to model the impact of permeability
 variations on temperature over a 30-year period. The example uses a channelized
-permeability field, which provides an interesting case study of ES-MDA's
-behavior with non-Gaussian geological features. Since ES-MDA operates under
+permeability field, which provides an interesting case study of ESMDA's
+behavior with non-Gaussian geological features. Since ESMDA operates under
 Gaussian assumptions, it tends to create smooth updates to the permeability
 field rather than maintaining sharp channel boundaries. This limitation becomes
 particularly visible when the algorithm identifies the need for connectivity
 between wells - instead of creating or modifying channels, it increases
 permeability in a more diffuse manner. This behavior highlights both the power
-of ES-MDA in matching production data and its limitations in preserving complex
+of ESMDA in matching production data and its limitations in preserving complex
 geological features.
 
 
 .. tip::
 
-    This example can serve as an example how one can use ``resmda`` with any
+    This example can serve as an example how one can use ``dageo`` with any
     external modelling code, here with the *Delft Advanced Research Terra
     Simulator* (DARTS).
 
@@ -79,7 +79,7 @@ import pooch
 import numpy as np
 import matplotlib.pyplot as plt
 
-import resmda
+import dageo
 
 compute_darts = False
 if compute_darts:
@@ -166,7 +166,7 @@ perm_prior = perm[1:, :, :, :]
 #
 # The true permeability model is the one facies realization we use to create
 # observations by adding noise to the modelled data. These observations are
-# what we try to match with ES-MDA. To look at this permeability field is
+# what we try to match with ESMDA. To look at this permeability field is
 # important to later interpret the result. In particular, we see that there is
 # a channel of high permeability connecting the injection with the production
 # well.
@@ -346,7 +346,7 @@ if compute_darts:
 # DARTS simulation function
 # '''''''''''''''''''''''''
 #
-# In order to use an external code with ``resmda``, you have to write a wrapper
+# In order to use an external code with ``dageo``, you have to write a wrapper
 # function, which
 #
 # - takes an ndarray of the shape of the prior models ``(ne, ...)``, and
@@ -432,8 +432,8 @@ ax.set_title("Temperature at Production Well")
 
 
 ###############################################################################
-# Perform Data Assimilation (ES-MDA)
-# ----------------------------------
+# Perform Data Assimilation (ESMDA)
+# ---------------------------------
 
 # Define a function to restrict the permeability values
 def restrict_permeability(x):
@@ -441,9 +441,9 @@ def restrict_permeability(x):
     np.clip(x, perm_min, perm_max, out=x)
 
 
-# Run ES-MDA
+# Run ESMDA
 if compute_darts:
-    perm_post, data_post = resmda.esmda(
+    perm_post, data_post = dageo.esmda(
         model_prior=perm_prior,
         forward=temperature_at_production_well,
         data_obs=data_obs,
@@ -596,4 +596,4 @@ fig.supxlabel("X Grid Cell")
 
 
 ###############################################################################
-resmda.Report()
+dageo.Report()

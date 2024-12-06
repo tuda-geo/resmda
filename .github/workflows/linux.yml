@@ -80,13 +80,13 @@ jobs:
 
       - name: Flake8
         shell: bash -l {0}
-        run: flake8 docs/conf.py resmda/ tests/
+        run: flake8 docs/conf.py dageo/ tests/
 
       - name: Test with pytest
         shell: bash -l {0}
         run: |
           python -m pip install .
-          pytest --cov=resmda
+          pytest --cov=dageo
 
   deploy:
     needs: test

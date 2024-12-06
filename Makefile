@@ -22,11 +22,11 @@ dev-install:
 .ONESHELL:
 pytest:
 	rm -rf .coverage htmlcov/ .pytest_cache/
-	pytest --cov=resmda
+	pytest --cov=dageo
 	coverage html
 
 flake8:
-	flake8 docs/conf.py resmda/ tests/ examples/
+	flake8 docs/conf.py dageo/ tests/ examples/
 
 html:
 	cd docs && make html
@@ -35,7 +35,7 @@ html-noplot:
 	cd docs && make html-noplot
 
 html-clean:
-	cd docs && rm -rf api/resmda* gallery/* _build/ && make html
+	cd docs && rm -rf api/dageo* gallery/* _build/ && make html
 
 preview:
 	xdg-open docs/_build/html/index.html
@@ -44,9 +44,9 @@ linkcheck:
 	cd docs && make linkcheck
 
 clean:
-	python -m pip uninstall resmda -y
-	rm -rf build/ dist/ .eggs/ resmda.egg-info/ resmda/version.py  # build
+	python -m pip uninstall dageo -y
+	rm -rf build/ dist/ .eggs/ dageo.egg-info/ dageo/version.py  # build
 	rm -rf */__pycache__/ */*/__pycache__/      # python cache
 	rm -rf .coverage htmlcov/ .pytest_cache/    # tests and coverage
-	rm -rf docs/gallery/* docs/gallery/*.zip docs/_build/ docs/api/resmda*  # docs
+	rm -rf docs/gallery/* docs/gallery/*.zip docs/_build/ docs/api/dageo*  # docs
 	rm -rf docs/savefig

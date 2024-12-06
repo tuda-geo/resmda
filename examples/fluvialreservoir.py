@@ -1,12 +1,12 @@
 r"""
-2D Fluvial Reservoir ES-MDA example
-===================================
+2D Fluvial Reservoir ESMDA example
+==================================
 
 This example uses fluvial models containing different facies.
 
 This in contrast to the basic reservoir example
 :ref:`sphx_glr_gallery_basicreservoir.py`, where a single facies was used. The
-example also compares the use of ES-MDA with and without localization, as
+example also compares the use of ESMDA with and without localization, as
 explained in the example :ref:`sphx_glr_gallery_localization.py`.
 
 The fluvial models were generated with ``FLUVSIM`` through ``geomodpy``, for
@@ -34,7 +34,7 @@ import pooch
 import numpy as np
 import matplotlib.pyplot as plt
 
-import resmda
+import dageo
 
 # For reproducibility, we instantiate a random number generator with a fixed
 # seed. For production, remove the seed!
@@ -82,7 +82,7 @@ perm_min = 0.05
 perm_max = 10.0
 
 # Instantiate a random permeability instance
-RP = resmda.RandomPermeability(
+RP = dageo.RandomPermeability(
     nx, ny, perm_mean=None, perm_min=perm_min, perm_max=perm_max
 )
 
@@ -105,7 +105,7 @@ fig.colorbar(im, ax=axs, label="Log Permeability (mD)")
 # Model parameters
 # ----------------
 
-# We take the first model as "true/reference", and the other for ES-MDA.
+# We take the first model as "true/reference", and the other for ESMDA.
 perm_true = permeabilities[0, ...][None, ...]
 perm_prior = permeabilities[1:, ...]
 
@@ -137,7 +137,7 @@ wells = np.array([
 # -------------------------------------------
 
 # Instantiate reservoir simulator
-RS = resmda.Simulator(nx, ny, wells=wells)
+RS = dageo.Simulator(nx, ny, wells=wells)
 
 
 def sim(x):
@@ -160,12 +160,12 @@ data_obs[0, :3] = data_true[0, :3]
 nd_positions = np.tile(np.array([ox, oy]), time.size).T
 
 # Create matrix
-loc_mat = resmda.localization_matrix(RP.cov, nd_positions, (nx, ny))
+loc_mat = dageo.localization_matrix(RP.cov, nd_positions, (nx, ny))
 
 
 ###############################################################################
-# ES-MDA
-# ------
+# ESMDA
+# -----
 
 
 def restrict_permeability(x):
@@ -189,14 +189,14 @@ inp = {
 # Without localization
 # ''''''''''''''''''''
 
-nl_perm_post, nl_data_post = resmda.esmda(**inp)
+nl_perm_post, nl_data_post = dageo.esmda(**inp)
 
 
 ###############################################################################
 # With localization
 # '''''''''''''''''
 
-wl_perm_post, wl_data_post = resmda.esmda(**inp, localization_matrix=loc_mat)
+wl_perm_post, wl_data_post = dageo.esmda(**inp, localization_matrix=loc_mat)
 
 
 ###############################################################################
@@ -388,4 +388,4 @@ with open(fpinput, "r") as f:
     print(json.dumps(json.load(f), indent=2))
 
 ###############################################################################
-resmda.Report()
+dageo.Report()

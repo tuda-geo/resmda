@@ -3,7 +3,7 @@
 License
 =======
 
-Everything of resmda is open-source: The code is released under the Apache 2.0
+Everything of dageo is open-source: The code is released under the Apache 2.0
 license, the text (e.g., the manual) is released under the CC-BY 4.0 license.
 
 
@@ -18,7 +18,7 @@ This work is licensed under Attribution 4.0 International (CC-BY-4.0).
 License of Code
 ---------------
 
-Copyright 2024 Dieter Werthmüller, Gabriel Serrao Seabra
+Copyright 2024 D. Werthmüller, G. Serrao Seabra, F.C. Vossepoel
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

@@ -3,8 +3,8 @@ requires = ["setuptools>=64", "setuptools_scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "resmda"
-description = "ES-MDA with a simple 2D reservoir modeller"
+name = "dageo"
+description = "Data Assimilation in Geosciences"
 readme = "README.rst"
 requires-python = ">=3.10"
 authors = [
@@ -28,9 +28,9 @@ dynamic = ["version"]
 file = "LICENSE"
 
 [project.urls]
-Homepage = "https://tuda-geo.github.io/resmda"
-Documentation = "https://tuda-geo.github.io/resmda"
-Repository = "https://github.com/tuda-geo/resmda"
+Homepage = "https://tuda-geo.github.io/dageo"
+Documentation = "https://tuda-geo.github.io/dageo"
+Repository = "https://github.com/tuda-geo/dageo"
 
 [project.optional-dependencies]
 docs = [
@@ -56,8 +56,8 @@ tests = [
     "flake8-pyproject",
 ]
 all = [
-    "resmda[docs]",
-    "resmda[tests]",
+    "dageo[docs]",
+    "dageo[tests]",
 ]
 build = [
     "setuptools_scm>=8",
@@ -65,10 +65,10 @@ build = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["resmda*"]
+include = ["dageo*"]
 
 [tool.setuptools_scm]
-version_file = "resmda/version.py"
+version_file = "dageo/version.py"
 
 [tool.flake8]
 per-file-ignores = [

@@ -1,6 +1,6 @@
 import time
 import warnings
-from resmda import __version__
+from dageo import __version__
 
 # ==== 1. Extensions  ====
 
@@ -64,7 +64,7 @@ intersphinx_mapping = {
 }
 
 # ==== 2. General Settings ====
-description = "ES-MDA with a simple 2D reservoir modeller"
+description = "Data Assimilation in Geosciences"
 
 # The templates path.
 # templates_path = ["_templates"]
@@ -76,7 +76,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "resmda"
+project = "dageo"
 author = "D. Werthmüller, G. Serrao Seabra, F.C. Vossepoel"
 copyright = f"2024-{time.strftime('%Y')}, {author}"
 
@@ -99,23 +99,23 @@ html_static_path = ["_static"]
 
 html_theme_options = {
     "logo": {
-        "text": "resmda",
+        "text": "dageo",
     },
     "navigation_with_keys": True,
-    "github_url": "https://github.com/tuda-geo/resmda",
+    "github_url": "https://github.com/tuda-geo/dageo",
     # "use_edit_page_button": True,
 }
 
 html_context = {
     "github_user": "tuda-geo",
-    "github_repo": "resmda",
+    "github_repo": "dageo",
     "github_version": "main",
     "doc_path": "docs",
 }
 
 html_use_modindex = True
 html_file_suffix = ".html"
-htmlhelp_basename = "resmda"
+htmlhelp_basename = "dageo"
 html_css_files = [
     "style.css",
     "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/" +

@@ -1,14 +1,14 @@
 r"""
-2D Reservoir ES-MDA example
-===========================
+2D Reservoir ESMDA example
+==========================
 
-Ensemble Smoother Multiple Data Assimilation (ES-MDA) in Reservoir Simulation.
+Ensemble Smoother Multiple Data Assimilation (ESMDA) in Reservoir Simulation.
 
 """
 import numpy as np
 import matplotlib.pyplot as plt
 
-import resmda
+import dageo
 
 # For reproducibility, we instantiate a random number generator with a fixed
 # seed. For production, remove the seed!
@@ -30,7 +30,7 @@ perm_mean = 3.0
 perm_min = 0.5
 perm_max = 5.0
 
-# ES-MDA parameters
+# ESMDA parameters
 ne = 100                  # Number of ensembles
 dt = np.zeros(10)+0.0001  # Time steps (could be irregular, e.g., increasing!)
 time = np.r_[0, np.cumsum(dt)]
@@ -47,15 +47,15 @@ wells = None
 
 
 ###############################################################################
-# Create permeability maps for ES-MDA
-# -----------------------------------
+# Create permeability maps for ESMDA
+# ----------------------------------
 #
 # We will create a set of permeability maps that will serve as our initial
 # guess (prior). These maps are generated using a Gaussian random field and are
 # constrained by certain statistical properties.
 
 # Get the model and ne prior models
-RP = resmda.RandomPermeability(nx, ny, perm_mean, perm_min, perm_max)
+RP = dageo.RandomPermeability(nx, ny, perm_mean, perm_min, perm_max)
 perm_true = RP(1, random=rng)
 perm_prior = RP(ne, random=rng)
 
@@ -84,7 +84,7 @@ for ax in axs[:, 0].ravel():
 # -------------------------------------------
 
 # Instantiate reservoir simulator
-RS = resmda.Simulator(nx, ny, wells=wells)
+RS = dageo.Simulator(nx, ny, wells=wells)
 
 
 def sim(x):
@@ -109,8 +109,8 @@ ax.set_ylabel("Pressure (bar)")
 
 
 ###############################################################################
-# ES-MDA
-# ------
+# ESMDA
+# -----
 
 
 def restrict_permeability(x):
@@ -118,7 +118,7 @@ def restrict_permeability(x):
     np.clip(x, perm_min, perm_max, out=x)
 
 
-perm_post, data_post = resmda.esmda(
+perm_post, data_post = dageo.esmda(
     model_prior=perm_prior,
     forward=sim,
     data_obs=data_obs,
@@ -134,7 +134,7 @@ perm_post, data_post = resmda.esmda(
 # Posterior Analysis
 # ------------------
 #
-# After running ES-MDA, it's crucial to analyze the posterior ensemble of
+# After running ESMDA, it's crucial to analyze the posterior ensemble of
 # models. Here, we visualize the first three realizations from both the prior
 # and posterior ensembles to see how the models have been updated.
 
@@ -153,7 +153,7 @@ fig.colorbar(im, ax=ax, label="Log of Permeability (mD)",
 # Observing the monitored pressure at cell (1,1) for all realizations and the
 # reference case, we can see that the ensemble of models after the assimilation
 # steps (in blue) is closer to the reference case (in red) than the prior
-# ensemble (in gray). This indicates that the ES-MDA method is effectively
+# ensemble (in gray). This indicates that the ESMDA method is effectively
 # updating the models to better represent the observed data.
 
 
@@ -170,4 +170,4 @@ ax.set_ylabel("Pressure (bar)")
 
 ###############################################################################
 
-resmda.Report()
+dageo.Report()
